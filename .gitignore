@@ -1,0 +1,33 @@
+# Node.js / Generell
+node_modules/
+npm-debug.log
+yarn-error.log
+yarn-debug.log
+*.log
+
+# Environment Variables (Sicherheitskritisch!)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build Outputs (z.B. für React/Vue/Angular im Frontend)
+build/
+dist/
+out/
+.next/
+
+# Betriebssystem-Dateien
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEs und Editoren
+.idea/
+.vscode/
+*.swp
