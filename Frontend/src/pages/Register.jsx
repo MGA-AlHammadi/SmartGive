@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { User, Mail, Lock, RefreshCcw } from 'lucide-react';
+import toast from 'react-hot-toast';
 import registerImage from '../assets/screen.png';
 import { registerUser } from '../services/authService';
 
@@ -25,7 +26,10 @@ const Register = () => {
     setError('');
     
     if (formData.password !== formData.confirmPassword) {
-      return setError('Die Passwörter stimmen nicht überein!');
+      const msg = 'Die Passwörter stimmen nicht überein!';
+      setError(msg);
+      toast.error(msg);
+      return;
     }
 
     setLoading(true);
@@ -43,12 +47,20 @@ const Register = () => {
         firstName: firstName,
         lastName: lastName,
         companyName: role === 'NGO' ? formData.fullName : null, // Falls NGO, füllen wir companyName
+        isCompany: role === 'NGO'
       });
 
-      alert('Konto erfolgreich erstellt! Du kannst dich jetzt anmelden.');
-      navigate('/login'); // Direkt zur Login-Seite weiterleiten
+      toast.success('Konto erfolgreich erstellt!');
+      
+      // Weiterleitung basierend auf der Rolle
+      if (role === 'NGO') {
+        navigate('/ngo-profile');
+      } else {
+        navigate('/spender-profile');
+      }
     } catch (err) {
       setError(err.message);
+      toast.error(err.message || 'Registrierung fehlgeschlagen');
     } finally {
       setLoading(false);
     }

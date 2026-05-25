@@ -38,7 +38,8 @@ const login = async (req, res) => {
                 username: user.username,
                 firstName: user.first_name,
                 lastName: user.last_name,
-                companyName: user.company_name
+                companyName: user.company_name,
+                isCompany: user.isCompany
             }
         });
 
@@ -50,7 +51,7 @@ const login = async (req, res) => {
 
 // Hilfsfunktion zur Registrierung (damit du einen Benutzer anlegen kannst zum Einloggen)
 const register = async (req, res) => {
-    const { username, email, password, firstName, lastName, companyName, address } = req.body;
+    const { username, email, password, firstName, lastName, companyName, address, isCompany } = req.body;
 
     try {
         // Passwort hashen
@@ -65,7 +66,8 @@ const register = async (req, res) => {
             firstName,
             lastName,
             companyName,
-            address
+            address,
+            isCompany
         });
 
         res.status(201).json({ message: 'Benutzer erfolgreich erstellt', user: newUser });

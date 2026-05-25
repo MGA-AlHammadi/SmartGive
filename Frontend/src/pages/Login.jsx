@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Lock, RefreshCcw } from 'lucide-react';
+import { Mail, Lock, RefreshCcw } from 'lucide-react';
+import toast from 'react-hot-toast';
 import loginImage from '../assets/screen.png';
 import { loginUser } from '../services/authService';
 
@@ -29,10 +30,13 @@ const Login = () => {
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
 
-      alert('Login erfolgreich!');
-      navigate('/home'); // Leitet auf die Homepage weiter (die wir später erstellen)
+      toast.success('Willkommen zurück!');
+      
+      // Weiterleitung zur Homepage
+      navigate('/home');
     } catch (err) {
       setError(err.message);
+      toast.error(err.message || 'Login fehlgeschlagen');
     } finally {
       setLoading(false);
     }
@@ -100,17 +104,17 @@ const Login = () => {
 
             <form onSubmit={handleSubmit} className="space-y-4">
             
-            {/* Benutzername Input */}
+            {/* E-Mail Input */}
             <div>
-              <label className="block text-[13px] text-gray-700 mb-1">Benutzername</label>
+              <label className="block text-[13px] text-gray-700 mb-1">E-Mail-Adresse</label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                 <input
                   type="text"
                   name="username"
                   value={formData.username}
                   onChange={handleChange}
-                  placeholder="Dein Benutzername"
+                  placeholder="name@beispiel.de"
                   className="w-full bg-[#f4ece3]/40 text-gray-800 rounded-lg pl-9 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand/50 text-sm"
                   required
                 />

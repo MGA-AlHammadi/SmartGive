@@ -10,11 +10,11 @@ const updateLastLogin = async (userId) => {
 };
 
 const createUser = async (userData) => {
-    const { username, email, passwordHash, firstName, lastName, companyName, address } = userData;
+    const { username, email, passwordHash, firstName, lastName, companyName, address, isCompany } = userData;
     const result = await db.query(
-        `INSERT INTO users (username, email, password_hash, first_name, last_name, company_name, company_address) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, username, email`,
-        [username, email, passwordHash, firstName, lastName, companyName, address]
+        `INSERT INTO users (username, email, password_hash, first_name, last_name, company_name, company_address, "isCompany") 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, username, email, "isCompany"`,
+        [username, email, passwordHash, firstName, lastName, companyName, address, isCompany]
     );
     return result.rows[0];
 };
