@@ -91,7 +91,7 @@ const Login = () => {
         <div className="flex-1 flex items-center justify-center mt-6">
           <div className="w-full max-w-md bg-white rounded-3xl shadow-sm p-8">
             
-            <h2 className="text-2xl font-semibold text-gray-900 mb-1">Willkommen zurueck</h2>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-1">Willkommen zurück</h2>
             <p className="text-xs text-gray-500 mb-6">
               Melden Sie sich an, um weiterzumachen.
             </p>
