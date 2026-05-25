@@ -2,11 +2,11 @@ import React from 'react';
 
 const Footer = () => {
   return (
-    <footer className="w-full bg-white">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-6 py-6 md:flex-row md:items-center md:justify-between">
+    <footer className="w-full bg-white border-t border-gray-100">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-6 py-4 md:flex-row md:items-center md:justify-between">
         <div className="text-[#1f4d3a]">
-          <div className="text-lg font-semibold">SmartGive</div>
-          <div className="text-sm text-gray-600">
+          <div className="text-base font-semibold">SmartGive</div>
+          <div className="text-xs text-gray-500">
             &copy; 2026 SmartGive. Ethische Raffinesse beim Geben.
           </div>
         </div>

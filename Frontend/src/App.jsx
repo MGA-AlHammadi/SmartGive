@@ -6,8 +6,8 @@ import Footer from './components/Footer'
 
 function App() {
   return (
-    <div className="min-h-screen bg-[#F7F6F2] grid grid-rows-[1fr_auto]">
-      <div className="min-h-0">
+    <div className="h-screen bg-[#F7F6F2] grid grid-rows-[1fr_auto] overflow-hidden">
+      <div className="overflow-y-auto min-h-0">
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
