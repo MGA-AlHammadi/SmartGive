@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, RefreshCcw } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -9,13 +9,25 @@ const Login = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
-    password: ''
+    password: '',
+    rememberMe: false
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    const savedUser = localStorage.getItem('rememberedUser');
+    if (savedUser) {
+      setFormData(prev => ({ ...prev, username: savedUser, rememberMe: true }));
+    }
+  }, []);
+
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+    setFormData({ 
+      ...formData, 
+      [name]: type === 'checkbox' ? checked : value 
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -29,6 +41,12 @@ const Login = () => {
       // Token und User-Daten im Browser (Local Storage) speichern
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
+
+      if (formData.rememberMe) {
+        localStorage.setItem('rememberedUser', formData.username);
+      } else {
+        localStorage.removeItem('rememberedUser');
+      }
 
       toast.success('Willkommen zurück!');
       
@@ -141,7 +159,13 @@ const Login = () => {
             {/* Optionen (Angemeldet bleiben & Passwort vergessen) */}
             <div className="flex items-center justify-between text-xs">
               <label className="flex items-center text-gray-600 cursor-pointer">
-                <input type="checkbox" className="mr-2 rounded border-gray-300 text-brand focus:ring-brand accent-brand" />
+                <input 
+                  type="checkbox" 
+                  name="rememberMe"
+                  checked={formData.rememberMe}
+                  onChange={handleChange}
+                  className="mr-2 rounded border-gray-300 text-brand focus:ring-brand accent-brand" 
+                />
                 Angemeldet bleiben
               </label>
               <a href="#" className="text-brand font-semibold hover:underline">Passwort vergessen?</a>

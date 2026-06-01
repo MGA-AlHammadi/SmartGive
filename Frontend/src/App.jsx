@@ -1,16 +1,20 @@
 import React from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
+import Header from './components/Header'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import Home from './pages/Home'
 import Footer from './components/Footer'
 
 // Temporäre Platzhalter für die Profilseiten
-const SpenderProfile = () => <div className="p-20 text-center text-2xl">Spender Profil (In Arbeit...)</div>;
-const NGOProfile = () => <div className="p-20 text-center text-2xl">NGO Profil (In Arbeit...)</div>;
-const Home = () => <div className="p-20 text-center text-2xl">Willkommen auf der Homepage!</div>;
+const SpenderProfile = () => <div className="p-20 text-center text-2xl text-gray-400">Spender Profil (In Arbeit...)</div>;
+const NGOProfile = () => <div className="p-20 text-center text-2xl text-gray-400">NGO Profil (In Arbeit...)</div>;
 
 function App() {
+  const location = useLocation();
+  const hideHeaderFooter = ['/login', '/register'].includes(location.pathname);
+
   return (
     <div className="h-screen bg-[#F7F6F2] grid grid-rows-[1fr_auto] overflow-hidden">
       <Toaster 
@@ -35,17 +39,20 @@ function App() {
           },
         }}
       />
-      <div className="overflow-y-auto min-h-0">
-        <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/home" element={<Home />} />
-          <Route path="/spender-profile" element={<SpenderProfile />} />
-          <Route path="/ngo-profile" element={<NGOProfile />} />
-        </Routes>
+      <div className="overflow-y-auto min-h-0 flex flex-col">
+        {!hideHeaderFooter && <Header />}
+        <main className="flex-1">
+          <Routes>
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/spender-profile" element={<SpenderProfile />} />
+            <Route path="/ngo-profile" element={<NGOProfile />} />
+          </Routes>
+        </main>
       </div>
-      <Footer />
+      {!hideHeaderFooter && <Footer />}
     </div>
   )
 }
