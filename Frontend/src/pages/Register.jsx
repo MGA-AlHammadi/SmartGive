@@ -40,7 +40,7 @@ const Register = () => {
     const lastName = nameParts.slice(1).join(' ') || '.';
 
     try {
-      await registerUser({
+      const response = await registerUser({
         username: formData.email, // Backend zwingt einen username auf, wir nehmen die Email
         email: formData.email,
         password: formData.password,
@@ -49,6 +49,10 @@ const Register = () => {
         companyName: role === 'NGO' ? formData.fullName : null, // Falls NGO, füllen wir companyName
         isCompany: role === 'NGO'
       });
+
+      // User Daten speichern, damit Header sie direkt anzeigen kann
+      localStorage.setItem('user', JSON.stringify(response.user));
+      localStorage.setItem('token', response.token);
 
       toast.success('Konto erfolgreich erstellt!');
       

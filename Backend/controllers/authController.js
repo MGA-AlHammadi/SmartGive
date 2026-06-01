@@ -70,7 +70,25 @@ const register = async (req, res) => {
             isCompany
         });
 
-        res.status(201).json({ message: 'Benutzer erfolgreich erstellt', user: newUser });
+        // JWT erstellen für automatischen Login nach Registrierung
+        const token = jwt.sign(
+            { id: newUser.id, username: newUser.username },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+
+        res.status(201).json({ 
+            message: 'Benutzer erfolgreich erstellt', 
+            token,
+            user: {
+                id: newUser.id,
+                username: newUser.username,
+                firstName: newUser.firstName,
+                lastName: newUser.lastName,
+                companyName: newUser.companyName,
+                isCompany: newUser.isCompany
+            }
+        });
     } catch (err) {
         console.error('Fehler bei der Registrierung:', err);
         res.status(500).json({ message: 'Fehler bei der Registrierung (Möglicherweise existiert der Username schon)' });

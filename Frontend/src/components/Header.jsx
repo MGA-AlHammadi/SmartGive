@@ -92,7 +92,10 @@ const Header = () => {
               <div className="px-4 py-2 border-b border-gray-50 mb-1">
                 <p className="text-xs text-gray-400 font-medium">Konto</p>
               </div>
-              <Link to="/home" className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+              <Link 
+                to={user.isCompany ? "/ngo-profile" : "/spender-profile"} 
+                className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+              >
                 <User size={16} /> Profil bearbeiten
               </Link>
               <button 

@@ -8,8 +8,19 @@ import Home from './pages/Home'
 import Footer from './components/Footer'
 
 // Temporäre Platzhalter für die Profilseiten
-const SpenderProfile = () => <div className="p-20 text-center text-2xl text-gray-400">Spender Profil (In Arbeit...)</div>;
-const NGOProfile = () => <div className="p-20 text-center text-2xl text-gray-400">NGO Profil (In Arbeit...)</div>;
+const SpenderProfile = () => (
+  <div className="p-20 text-center animate-in fade-in duration-500">
+    <h1 className="text-3xl font-bold text-gray-900 mb-4">Mein Spender-Profil</h1>
+    <p className="text-gray-500 text-lg">Hier kannst du deine persönlichen Daten und Spenden verwalten.</p>
+  </div>
+);
+
+const NGOProfile = () => (
+  <div className="p-20 text-center animate-in fade-in duration-500">
+    <h1 className="text-3xl font-bold text-gray-900 mb-4">NGO Dashboard</h1>
+    <p className="text-gray-500 text-lg">Verwalte hier deine Bedarfe und sieh eingegangene Spenden ein.</p>
+  </div>
+);
 
 function App() {
   const location = useLocation();
