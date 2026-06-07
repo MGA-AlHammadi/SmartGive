@@ -51,9 +51,17 @@ const login = async (req, res) => {
 
 // Hilfsfunktion zur Registrierung (damit du einen Benutzer anlegen kannst zum Einloggen)
 const register = async (req, res) => {
-    const { username, email, password, firstName, lastName, companyName, address, isCompany } = req.body;
+    const { username, email, password, firstName, lastName, companyName, address, companyCountry, companyCity, isCompany } = req.body;
 
     try {
+        if (isCompany && (!companyCountry?.trim() || !companyCity?.trim())) {
+            return res.status(400).json({ message: 'Für NGO-Konten sind Land und Stadt erforderlich' });
+        }
+
+        const companyAddress = isCompany
+            ? `${companyCity.trim()}, ${companyCountry.trim()}`
+            : (address || null);
+
         // Passwort hashen
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
@@ -66,7 +74,7 @@ const register = async (req, res) => {
             firstName,
             lastName,
             companyName,
-            address,
+            address: companyAddress,
             isCompany
         });
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Mail, Lock, RefreshCcw } from 'lucide-react';
+import { User, Mail, Lock, RefreshCcw, Globe, MapPin } from 'lucide-react';
 import toast from 'react-hot-toast';
 import registerImage from '../assets/screen.png';
 import { registerUser } from '../services/authService';
@@ -12,7 +12,9 @@ const Register = () => {
     fullName: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    country: '',
+    city: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,6 +29,13 @@ const Register = () => {
     
     if (formData.password !== formData.confirmPassword) {
       const msg = 'Die Passwörter stimmen nicht überein!';
+      setError(msg);
+      toast.error(msg);
+      return;
+    }
+
+    if (role === 'NGO' && (!formData.country.trim() || !formData.city.trim())) {
+      const msg = 'Bitte geben Sie Land und Stadt für NGO-Konten an.';
       setError(msg);
       toast.error(msg);
       return;
@@ -47,6 +56,9 @@ const Register = () => {
         firstName: firstName,
         lastName: lastName,
         companyName: role === 'NGO' ? formData.fullName : null, // Falls NGO, füllen wir companyName
+        companyCountry: role === 'NGO' ? formData.country.trim() : null,
+        companyCity: role === 'NGO' ? formData.city.trim() : null,
+        address: role === 'NGO' ? `${formData.city.trim()}, ${formData.country.trim()}` : null,
         isCompany: role === 'NGO'
       });
 
@@ -156,10 +168,11 @@ const Register = () => {
 
               {/* Name Input */}
               <div>
-                <label className="block text-[13px] text-gray-700 mb-1">Vollständiger Name</label>
+                <label htmlFor="fullName" className="block text-[13px] text-gray-700 mb-1">Vollständiger Name</label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <input
+                    id="fullName"
                     type="text"
                     name="fullName"
                     value={formData.fullName}
@@ -173,10 +186,11 @@ const Register = () => {
 
               {/* E-Mail Input */}
               <div>
-                <label className="block text-[13px] text-gray-700 mb-1">E-Mail-Adresse</label>
+                <label htmlFor="email" className="block text-[13px] text-gray-700 mb-1">E-Mail-Adresse</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <input
+                    id="email"
                     type="email"
                     name="email"
                     value={formData.email}
@@ -188,13 +202,52 @@ const Register = () => {
                 </div>
               </div>
 
+              {/* NGO Location */}
+              {role === 'NGO' && (
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <label htmlFor="country" className="block text-[13px] text-gray-700 mb-1">Land</label>
+                    <div className="relative">
+                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                      <input
+                        id="country"
+                        type="text"
+                        name="country"
+                        value={formData.country}
+                        onChange={handleChange}
+                        placeholder="Jordanien"
+                        className="w-full bg-[#f4ece3]/40 text-gray-800 rounded-lg pl-9 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand/50 text-sm"
+                        required={role === 'NGO'}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <label htmlFor="city" className="block text-[13px] text-gray-700 mb-1">Stadt</label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                      <input
+                        id="city"
+                        type="text"
+                        name="city"
+                        value={formData.city}
+                        onChange={handleChange}
+                        placeholder="Amman"
+                        className="w-full bg-[#f4ece3]/40 text-gray-800 rounded-lg pl-9 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand/50 text-sm"
+                        required={role === 'NGO'}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Password Split */}
               <div className="flex gap-4">
                 <div className="flex-1">
-                  <label className="block text-[13px] text-gray-700 mb-1">Passwort</label>
+                  <label htmlFor="password" className="block text-[13px] text-gray-700 mb-1">Passwort</label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     <input
+                      id="password"
                       type="password"
                       name="password"
                       value={formData.password}
@@ -206,10 +259,11 @@ const Register = () => {
                   </div>
                 </div>
                 <div className="flex-1">
-                  <label className="block text-[13px] text-gray-700 mb-1">Bestätigen</label>
+                  <label htmlFor="confirmPassword" className="block text-[13px] text-gray-700 mb-1">Bestätigen</label>
                   <div className="relative">
                     <RefreshCcw className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     <input
+                      id="confirmPassword"
                       type="password"
                       name="confirmPassword"
                       value={formData.confirmPassword}
