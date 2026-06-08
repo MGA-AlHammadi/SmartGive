@@ -13,7 +13,41 @@ const Header = () => {
     navigate('/login');
   };
 
-  if (!token) return null;
+  if (!token) {
+    return (
+      <header className="bg-white border-b border-gray-100 px-4 sm:px-6 py-4 sticky top-0 z-50">
+        <div className="mx-auto max-w-7xl flex items-center justify-between gap-4">
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="bg-brand p-1.5 rounded-lg group-hover:scale-110 transition-transform">
+              <RefreshCcw size={22} className="text-white" />
+            </div>
+            <span className="text-brand font-black text-xl tracking-tight">SmartGive</span>
+          </Link>
+
+          <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-gray-600">
+            <a href="#ngo-bedarf" className="hover:text-brand transition-colors">NGO Bedarf</a>
+            <a href="#spender-angebote" className="hover:text-brand transition-colors">Spender Angebote</a>
+            <a href="#impact" className="hover:text-brand transition-colors">Impact</a>
+          </nav>
+
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link
+              to="/register"
+              className="px-4 py-2 rounded-full text-sm font-semibold border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Registrieren
+            </Link>
+            <Link
+              to="/login"
+              className="px-4 sm:px-5 py-2 rounded-full text-sm font-semibold bg-brand text-white hover:bg-brand-light transition-colors"
+            >
+              Anmelden
+            </Link>
+          </div>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header className="bg-white border-b border-gray-100 px-6 py-3 flex items-center justify-between shadow-sm sticky top-0 z-50">
@@ -45,6 +79,7 @@ const Header = () => {
         
         {/* Schnell-Aktion: Nur Spender sehen "Spenden", NGOs sehen "Bedarf melden" */}
         <button 
+          onClick={() => navigate(user.isCompany ? '/home?create=need' : '/home?create=donation')}
           className={`hidden sm:flex items-center gap-2 text-white px-4 py-2 rounded-full text-sm font-bold transition-colors shadow-md ${
             user.isCompany 
             ? "bg-blue-600 hover:bg-blue-700 shadow-blue-500/10" 

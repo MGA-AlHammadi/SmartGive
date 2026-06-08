@@ -1,10 +1,842 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import {
+  createDonation,
+  createNeed,
+  deleteMyDonation,
+  deleteMyNeed,
+  fetchReceivedDonations,
+  fetchMyDonations,
+  fetchNeeds,
+  updateDonationDecision,
+  updateMyDonation,
+  updateMyNeed,
+} from '../services/marketplaceService';
 
 const Home = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const user = useMemo(() => JSON.parse(localStorage.getItem('user') || '{}'), []);
+  const token = localStorage.getItem('token');
+
+  const [needs, setNeeds] = useState([]);
+  const [myDonations, setMyDonations] = useState([]);
+  const [receivedDonations, setReceivedDonations] = useState([]);
+  const [loadingNeeds, setLoadingNeeds] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [needImages, setNeedImages] = useState([]);
+  const [donationImages, setDonationImages] = useState([]);
+  const [quickDonationImages, setQuickDonationImages] = useState([]);
+  const [editingNeedId, setEditingNeedId] = useState(null);
+  const [editingDonationId, setEditingDonationId] = useState(null);
+  const [quickDonateNeedId, setQuickDonateNeedId] = useState(null);
+  const [quickDonationForm, setQuickDonationForm] = useState({
+    quantity: '',
+    description: '',
+  });
+
+  const [needForm, setNeedForm] = useState({
+    title: '',
+    category: '',
+    gender: '',
+    size: '',
+    quantityNeeded: '',
+    country: '',
+    city: '',
+    description: '',
+    neededBy: '',
+  });
+
+  const [donationForm, setDonationForm] = useState({
+    ngoNeedId: '',
+    itemName: '',
+    category: '',
+    gender: '',
+    size: '',
+    quantity: '',
+    condition: 'good',
+    country: '',
+    city: '',
+    notes: '',
+  });
+
+  const isNgo = Boolean(user?.isCompany);
+  const [activeBoardTab, setActiveBoardTab] = useState('needs');
+  const createMode = searchParams.get('create');
+  const selectedNeedIdFromQuery = searchParams.get('needId');
+  const IMAGE_BASE_URL = import.meta.env.VITE_API_ORIGIN || 'http://localhost:5000';
+  let needSubmitText = 'Bedarf speichern';
+  let donationSubmitText = 'Spendenangebot senden';
+
+  if (editingNeedId) {
+    needSubmitText = 'Bedarf aktualisieren';
+  }
+
+  if (editingDonationId) {
+    donationSubmitText = 'Spendenangebot aktualisieren';
+  }
+
+  if (submitting) {
+    needSubmitText = 'Speichern...';
+    donationSubmitText = 'Speichern...';
+  }
+
+  const normalizeImageUrls = (value) => {
+    if (Array.isArray(value)) {
+      return value;
+    }
+
+    if (typeof value === 'string' && value.startsWith('{') && value.endsWith('}')) {
+      return value
+        .slice(1, -1)
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+
+    return [];
+  };
+
+  const toAbsoluteImageUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    return `${IMAGE_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
+
+  const showNeedForm = isNgo && createMode === 'need';
+  const showDonationForm = !isNgo && createMode === 'donation';
+  const showCreateSection = showNeedForm || showDonationForm;
+
+  const boardTabs = isNgo
+    ? [
+        { id: 'needs', label: 'NGO Bedarf' },
+        { id: 'incoming-donations', label: 'Spender Angebote' },
+      ]
+    : [
+        { id: 'needs', label: 'NGO Bedarf' },
+        { id: 'my-donations', label: 'Meine Angebote' },
+      ];
+
+  const needFormTitle = editingNeedId ? 'Bedarf bearbeiten' : 'Neuen Bedarf anlegen';
+  const donationFormTitle = editingDonationId ? 'Spende bearbeiten' : 'Neue Spende anlegen';
+
+  const loadNeeds = async () => {
+    setLoadingNeeds(true);
+    try {
+      const data = await fetchNeeds({ status: 'active' });
+      setNeeds(data.needs || []);
+    } catch (err) {
+      toast.error(err.message || 'Bedarfe konnten nicht geladen werden');
+    } finally {
+      setLoadingNeeds(false);
+    }
+  };
+
+  const loadMyDonations = async () => {
+    if (isNgo || !token) return;
+
+    try {
+      const data = await fetchMyDonations();
+      setMyDonations(data.donations || []);
+    } catch (err) {
+      toast.error(err.message || 'Eigene Spenden konnten nicht geladen werden');
+    }
+  };
+
+  const loadReceivedDonations = async () => {
+    if (!isNgo || !token) return;
+
+    try {
+      const data = await fetchReceivedDonations();
+      setReceivedDonations(data.donations || []);
+    } catch (err) {
+      toast.error(err.message || 'Eingegangene Spenden konnten nicht geladen werden');
+    }
+  };
+
+  useEffect(() => {
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
+    loadNeeds();
+    loadMyDonations();
+    loadReceivedDonations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, isNgo]);
+
+  useEffect(() => {
+    if (!selectedNeedIdFromQuery || isNgo) return;
+
+    setDonationForm((prev) => ({
+      ...prev,
+      ngoNeedId: selectedNeedIdFromQuery,
+    }));
+  }, [selectedNeedIdFromQuery, isNgo]);
+
+  const handleNeedChange = (e) => {
+    setNeedForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleDonationChange = (e) => {
+    setDonationForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleNeedImagesChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 5) {
+      toast.error('Maximal 5 Bilder erlaubt');
+      return;
+    }
+    setNeedImages(files);
+  };
+
+  const handleDonationImagesChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 5) {
+      toast.error('Maximal 5 Bilder erlaubt');
+      return;
+    }
+    setDonationImages(files);
+  };
+
+  const handleQuickDonationImagesChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 5) {
+      toast.error('Maximal 5 Bilder erlaubt');
+      return;
+    }
+    setQuickDonationImages(files);
+  };
+
+  const handleQuickQuantityChange = (e) => {
+    setQuickDonationForm((prev) => ({ ...prev, quantity: e.target.value }));
+  };
+
+  const handleQuickDescriptionChange = (e) => {
+    setQuickDonationForm((prev) => ({ ...prev, description: e.target.value }));
+  };
+
+  const resetNeedForm = () => {
+    setNeedForm({
+      title: '',
+      category: '',
+      gender: '',
+      size: '',
+      quantityNeeded: '',
+      country: '',
+      city: '',
+      description: '',
+      neededBy: '',
+    });
+    setNeedImages([]);
+    setEditingNeedId(null);
+  };
+
+  const resetDonationForm = () => {
+    setDonationForm({
+      ngoNeedId: '',
+      itemName: '',
+      category: '',
+      gender: '',
+      size: '',
+      quantity: '',
+      condition: 'good',
+      country: '',
+      city: '',
+      notes: '',
+    });
+    setDonationImages([]);
+    setEditingDonationId(null);
+  };
+
+  const handleNeedSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    try {
+      const payload = {
+        ...needForm,
+        title: needForm.title.trim(),
+        category: needForm.category.trim(),
+        gender: needForm.gender.trim() || null,
+        size: needForm.size.trim() || null,
+        quantityNeeded: Number(needForm.quantityNeeded),
+        country: needForm.country.trim(),
+        city: needForm.city.trim(),
+        description: needForm.description.trim() || null,
+        neededBy: needForm.neededBy || null,
+      };
+
+      if (editingNeedId) {
+        await updateMyNeed(editingNeedId, payload, needImages);
+        toast.success('Bedarf erfolgreich aktualisiert');
+      } else {
+        await createNeed(payload, needImages);
+        toast.success('Bedarf erfolgreich erstellt');
+      }
+
+      resetNeedForm();
+      await loadNeeds();
+      navigate('/home');
+    } catch (err) {
+      toast.error(err.message || 'Bedarf konnte nicht gespeichert werden');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDonationSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    try {
+      const payload = {
+        ...donationForm,
+        ngoNeedId: donationForm.ngoNeedId ? Number(donationForm.ngoNeedId) : null,
+        quantity: Number(donationForm.quantity),
+      };
+
+      if (editingDonationId) {
+        await updateMyDonation(editingDonationId, payload, donationImages);
+        toast.success('Spendenangebot erfolgreich aktualisiert');
+      } else {
+        await createDonation(payload, donationImages);
+        toast.success('Spendenangebot erfolgreich erstellt');
+      }
+
+      resetDonationForm();
+      await loadMyDonations();
+      navigate('/home');
+    } catch (err) {
+      toast.error(err.message || 'Spendenangebot konnte nicht gespeichert werden');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const startEditNeed = (need) => {
+    setEditingNeedId(need.id);
+    setNeedForm({
+      title: need.title || '',
+      category: need.category || '',
+      gender: need.gender || '',
+      size: need.size || '',
+      quantityNeeded: String(need.quantity_needed || ''),
+      country: need.country || '',
+      city: need.city || '',
+      description: need.description || '',
+      neededBy: need.needed_by ? String(need.needed_by).slice(0, 10) : '',
+    });
+    setNeedImages([]);
+    navigate('/home?create=need');
+  };
+
+  const startEditDonation = (donation) => {
+    setEditingDonationId(donation.id);
+    setDonationForm({
+      ngoNeedId: donation.ngo_need_id ? String(donation.ngo_need_id) : '',
+      itemName: donation.item_name || '',
+      category: donation.category || '',
+      gender: donation.gender || '',
+      size: donation.size || '',
+      quantity: String(donation.quantity || ''),
+      condition: donation.condition || 'good',
+      country: donation.country || '',
+      city: donation.city || '',
+      notes: donation.notes || '',
+    });
+    setDonationImages([]);
+    navigate('/home?create=donation');
+  };
+
+  const openDonateForNeed = (need) => {
+    if (isNgo) return;
+
+    setQuickDonateNeedId(need.id);
+    setQuickDonationForm({ quantity: '', description: '' });
+    setQuickDonationImages([]);
+  };
+
+  const cancelQuickDonate = () => {
+    setQuickDonateNeedId(null);
+    setQuickDonationForm({ quantity: '', description: '' });
+    setQuickDonationImages([]);
+  };
+
+  const handleQuickDonateSubmit = async (e, need) => {
+    e.preventDefault();
+
+    if (!quickDonationForm.quantity || Number(quickDonationForm.quantity) <= 0) {
+      toast.error('Bitte gültige Menge eingeben');
+      return;
+    }
+
+    if (!quickDonationForm.description.trim()) {
+      toast.error('Bitte Beschreibung eingeben');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await createDonation({
+        ngoNeedId: need.id,
+        itemName: need.title,
+        category: need.category,
+        gender: need.gender || null,
+        size: need.size || null,
+        quantity: Number(quickDonationForm.quantity),
+        condition: 'good',
+        country: need.country,
+        city: need.city,
+        notes: quickDonationForm.description.trim(),
+      }, quickDonationImages);
+
+      toast.success('Spendenangebot für den Bedarf gesendet');
+      await loadMyDonations();
+      cancelQuickDonate();
+    } catch (err) {
+      toast.error(err.message || 'Spendenangebot konnte nicht gesendet werden');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDonationDecision = async (donationId, status) => {
+    try {
+      await updateDonationDecision(donationId, status);
+      toast.success('Status aktualisiert');
+      await loadReceivedDonations();
+      await loadNeeds();
+    } catch (err) {
+      toast.error(err.message || 'Status konnte nicht aktualisiert werden');
+    }
+  };
+
+  const handleDeleteNeed = async (needId) => {
+    const confirmed = globalThis.confirm('Bedarf wirklich löschen?');
+    if (!confirmed) return;
+
+    try {
+      await deleteMyNeed(needId);
+      toast.success('Bedarf gelöscht');
+      await loadNeeds();
+      if (editingNeedId === needId) {
+        resetNeedForm();
+        navigate('/home');
+      }
+    } catch (err) {
+      toast.error(err.message || 'Bedarf konnte nicht gelöscht werden');
+    }
+  };
+
+  const handleDeleteDonation = async (donationId) => {
+    const confirmed = globalThis.confirm('Spendenangebot wirklich löschen?');
+    if (!confirmed) return;
+
+    try {
+      await deleteMyDonation(donationId);
+      toast.success('Spendenangebot gelöscht');
+      await loadMyDonations();
+      if (editingDonationId === donationId) {
+        resetDonationForm();
+        navigate('/home');
+      }
+    } catch (err) {
+      toast.error(err.message || 'Spendenangebot konnte nicht gelöscht werden');
+    }
+  };
+
+  const renderNeedsContent = () => {
+    if (loadingNeeds) {
+      return <p className="text-gray-500">Lade Bedarfe...</p>;
+    }
+
+    if (needs.length === 0) {
+      return <p className="text-gray-500">Noch keine Bedarfe vorhanden.</p>;
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        {needs.map((need) => {
+          const needImagesList = normalizeImageUrls(need.image_urls);
+          const coverImage = needImagesList[0] ? toAbsoluteImageUrl(needImagesList[0]) : '';
+          const needed = Number(need.quantity_needed || 0);
+          const received = Number(need.quantity_received || 0);
+          const isUrgent = needed > 0 && received / needed < 0.4;
+
+          return (
+            <article key={need.id} className="rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm hover:shadow-lg transition-shadow">
+              <div className="h-40 bg-slate-100 relative">
+                {coverImage ? (
+                  <img
+                    src={coverImage}
+                    alt="Bedarf Bild"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-slate-100 via-slate-50 to-emerald-50" />
+                )}
+                <span className={`absolute top-3 right-3 text-xs font-bold px-3 py-1 rounded-full text-white ${isUrgent ? 'bg-red-600' : 'bg-emerald-600'}`}>
+                  {isUrgent ? 'Dringend' : 'Normal'}
+                </span>
+              </div>
+
+              <div className="p-4 space-y-3">
+                <div>
+                  <p className="text-xl font-bold text-gray-900 leading-tight">{need.title}</p>
+                  <p className="text-sm text-gray-600">{need.category} • {need.city}, {need.country}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 border-y border-gray-100 py-2">
+                  <p>Größe: {need.size || '-'}</p>
+                  <p>Benötigt: {need.quantity_needed || 0}</p>
+                  <p>Gender: {need.gender || '-'}</p>
+                  <p>Erhalten: {need.quantity_received || 0}</p>
+                </div>
+
+                {need.description && (
+                  <p className="text-sm text-gray-500 line-clamp-2">{need.description}</p>
+                )}
+
+                <div className="flex flex-wrap gap-2">
+                  {isNgo && Number(need.ngo_user_id) === Number(user.id) && (
+                    <>
+                      <button onClick={() => startEditNeed(need)} className="text-xs px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors">Bearbeiten</button>
+                      <button onClick={() => handleDeleteNeed(need.id)} className="text-xs px-3 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 font-semibold transition-colors">Löschen</button>
+                    </>
+                  )}
+                  {!isNgo && (
+                    <button
+                      onClick={() => openDonateForNeed(need)}
+                      className="w-full text-sm px-4 py-2 rounded-lg bg-brand hover:bg-brand-light text-white font-semibold transition-colors"
+                    >
+                      Jetzt spenden
+                    </button>
+                  )}
+                </div>
+
+                {!isNgo && quickDonateNeedId === need.id && (
+                  <form onSubmit={(e) => handleQuickDonateSubmit(e, need)} className="border border-brand/20 bg-brand/5 rounded-xl p-3 grid grid-cols-1 gap-3">
+                    <h4 className="text-sm font-bold text-gray-900">Auf diesen Bedarf spenden</h4>
+                    <input
+                      type="number"
+                      min="1"
+                      value={quickDonationForm.quantity}
+                      onChange={handleQuickQuantityChange}
+                      placeholder="Menge"
+                      className="px-3 py-2.5 rounded-lg border border-gray-200"
+                      required
+                    />
+                    <textarea
+                      value={quickDonationForm.description}
+                      onChange={handleQuickDescriptionChange}
+                      placeholder="Beschreibung (was genau du spendest)"
+                      className="w-full px-3 py-2.5 rounded-lg border border-gray-200 min-h-20"
+                      required
+                    />
+                    <div>
+                      <label htmlFor={`quickDonationImages-${need.id}`} className="block text-sm font-medium text-gray-700 mb-1">Bilder (max. 5)</label>
+                      <input
+                        id={`quickDonationImages-${need.id}`}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleQuickDonationImagesChange}
+                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 bg-white"
+                      />
+                      {quickDonationImages.length > 0 && (
+                        <p className="text-xs text-gray-500 mt-1">{quickDonationImages.length} Bild(er) ausgewählt</p>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <button disabled={submitting} className="bg-brand hover:bg-brand-light disabled:opacity-70 text-white px-4 py-2 rounded-lg text-sm font-semibold">
+                        {submitting ? 'Senden...' : 'An NGO senden'}
+                      </button>
+                      <button type="button" onClick={cancelQuickDonate} className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-semibold">
+                        Abbrechen
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderMyDonationsContent = () => {
+    if (myDonations.length === 0) {
+      return <p className="text-gray-500">Du hast noch keine Spendenangebote gesendet.</p>;
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        {myDonations.map((donation) => {
+          const donationImagesList = normalizeImageUrls(donation.image_urls);
+          const coverImage = donationImagesList[0] ? toAbsoluteImageUrl(donationImagesList[0]) : '';
+          let donationTargetLabel = 'Öffentliches Angebot';
+
+          if (donation.ngo_name) {
+            donationTargetLabel = `NGO: ${donation.ngo_name}`;
+          } else if (donation.ngo_need_id) {
+            donationTargetLabel = 'NGO: Bedarf verknüpft';
+          }
+
+          return (
+            <article key={donation.id} className="rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm hover:shadow-lg transition-shadow">
+              <div className="h-40 bg-slate-100">
+                {coverImage ? (
+                  <img src={coverImage} alt="Spende Bild" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-slate-100 via-slate-50 to-emerald-50" />
+                )}
+              </div>
+
+              <div className="p-4 space-y-3">
+                <div>
+                  <p className="text-xl font-bold text-gray-900 leading-tight">{donation.item_name}</p>
+                  <p className="text-sm text-gray-600">{donation.category} • {donation.city}, {donation.country}</p>
+                </div>
+
+                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">{donationTargetLabel}</p>
+                {donation.notes && <p className="text-sm text-gray-500 line-clamp-2">{donation.notes}</p>}
+
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase px-3 py-1 rounded-full bg-amber-100 text-amber-700">
+                    {donation.status}
+                  </span>
+                  <div className="flex gap-2">
+                    <button onClick={() => startEditDonation(donation)} className="text-xs px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors">Bearbeiten</button>
+                    <button onClick={() => handleDeleteDonation(donation.id)} className="text-xs px-3 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 font-semibold transition-colors">Löschen</button>
+                  </div>
+                </div>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderReceivedDonationsContent = () => {
+    if (receivedDonations.length === 0) {
+      return <p className="text-gray-500">Noch keine eingegangenen Spendenangebote.</p>;
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        {receivedDonations.map((donation) => {
+          const donationImagesList = normalizeImageUrls(donation.image_urls);
+          const coverImage = donationImagesList[0] ? toAbsoluteImageUrl(donationImagesList[0]) : '';
+
+          return (
+            <article key={donation.id} className="rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm hover:shadow-lg transition-shadow">
+              <div className="h-40 bg-slate-100 relative">
+                {coverImage ? (
+                  <img src={coverImage} alt="Spende Bild" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-slate-100 via-slate-50 to-emerald-50" />
+                )}
+                <span className="absolute top-3 right-3 text-xs font-bold uppercase px-3 py-1 rounded-full bg-slate-100 text-slate-700">
+                  {donation.status}
+                </span>
+              </div>
+
+              <div className="p-4 space-y-3">
+                <div>
+                  <p className="text-xl font-bold text-gray-900 leading-tight">{donation.item_name}</p>
+                  <p className="text-sm text-gray-600">{donation.category} • {donation.city}, {donation.country}</p>
+                </div>
+
+                <div className="text-xs text-gray-600 space-y-1">
+                  <p>Von: {donation.donor_first_name} {donation.donor_last_name}</p>
+                  <p>Bedarf: {donation.need_title || (donation.is_public_offer ? 'Öffentliches Angebot' : '-')}</p>
+                </div>
+
+                <div className="flex gap-2 flex-wrap">
+                  {donation.status === 'pending' && donation.is_public_offer && (
+                    <button
+                      onClick={() => handleDonationDecision(donation.id, 'accepted')}
+                      className="text-xs px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold"
+                    >
+                      Angebot annehmen
+                    </button>
+                  )}
+                  {donation.status === 'pending' && !donation.is_public_offer && (
+                    <>
+                      <button
+                        onClick={() => handleDonationDecision(donation.id, 'accepted')}
+                        className="text-xs px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold"
+                      >
+                        Annehmen
+                      </button>
+                      <button
+                        onClick={() => handleDonationDecision(donation.id, 'rejected')}
+                        className="text-xs px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold"
+                      >
+                        Ablehnen
+                      </button>
+                    </>
+                  )}
+                  {donation.status === 'accepted' && (
+                    <button
+                      onClick={() => handleDonationDecision(donation.id, 'delivered')}
+                      className="text-xs px-3 py-1.5 rounded-lg bg-brand hover:bg-brand-light text-white font-semibold"
+                    >
+                      Als geliefert markieren
+                    </button>
+                  )}
+                </div>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderBoardContent = () => {
+    if (activeBoardTab === 'needs') {
+      return renderNeedsContent();
+    }
+
+    if (activeBoardTab === 'my-donations') {
+      return renderMyDonationsContent();
+    }
+
+    return renderReceivedDonationsContent();
+  };
+
   return (
-    <div className="p-20 text-center animate-in fade-in duration-500">
-      <h1 className="text-3xl font-bold text-gray-900 mb-4">Willkommen bei SmartGive!</h1>
-      <p className="text-gray-500 text-lg">Dein Dashboard wird hier entstehen.</p>
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in duration-500">
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+          {isNgo ? 'NGO Dashboard' : 'Spender Dashboard'}
+        </h1>
+        <p className="text-gray-600 mt-1">
+          {isNgo
+            ? 'Erstelle und verwalte Bedarfe für deine Organisation.'
+            : 'Wähle einen Bedarf aus und sende gezielte Spendenangebote.'}
+        </p>
+      </div>
+
+      {showCreateSection && (
+        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            {showNeedForm ? needFormTitle : donationFormTitle}
+          </h2>
+
+          {showNeedForm ? (
+            <form onSubmit={handleNeedSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input name="title" value={needForm.title} onChange={handleNeedChange} placeholder="Titel" className="px-3 py-2.5 rounded-lg border border-gray-200" required />
+              <input name="category" value={needForm.category} onChange={handleNeedChange} placeholder="Kategorie" className="px-3 py-2.5 rounded-lg border border-gray-200" required />
+              <input name="gender" value={needForm.gender} onChange={handleNeedChange} placeholder="Geschlecht (optional)" className="px-3 py-2.5 rounded-lg border border-gray-200" />
+              <input name="size" value={needForm.size} onChange={handleNeedChange} placeholder="Größe (optional)" className="px-3 py-2.5 rounded-lg border border-gray-200" />
+              <input type="number" min="1" name="quantityNeeded" value={needForm.quantityNeeded} onChange={handleNeedChange} placeholder="Benötigte Menge" className="px-3 py-2.5 rounded-lg border border-gray-200" required />
+              <input type="date" name="neededBy" value={needForm.neededBy} onChange={handleNeedChange} className="px-3 py-2.5 rounded-lg border border-gray-200" />
+              <input name="country" value={needForm.country} onChange={handleNeedChange} placeholder="Land" className="px-3 py-2.5 rounded-lg border border-gray-200" required />
+              <input name="city" value={needForm.city} onChange={handleNeedChange} placeholder="Stadt" className="px-3 py-2.5 rounded-lg border border-gray-200" required />
+              <textarea name="description" value={needForm.description} onChange={handleNeedChange} placeholder="Beschreibung" className="md:col-span-2 px-3 py-2.5 rounded-lg border border-gray-200 min-h-24" />
+              <div className="md:col-span-2">
+                <label htmlFor="needImages" className="block text-sm font-medium text-gray-700 mb-1">Bilder (max. 5)</label>
+                <input id="needImages" type="file" accept="image/*" multiple onChange={handleNeedImagesChange} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 bg-white" />
+                {needImages.length > 0 && (
+                  <p className="text-xs text-gray-500 mt-1">{needImages.length} Bild(er) ausgewählt</p>
+                )}
+              </div>
+              <div className="md:col-span-2 flex gap-3">
+                <button disabled={submitting} className="bg-blue-600 hover:bg-blue-700 disabled:opacity-70 text-white px-5 py-2.5 rounded-lg font-medium">
+                  {needSubmitText}
+                </button>
+                {editingNeedId && (
+                  <button type="button" onClick={() => { resetNeedForm(); navigate('/home'); }} className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-2.5 rounded-lg font-medium">
+                    Abbrechen
+                  </button>
+                )}
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handleDonationSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <select name="ngoNeedId" value={donationForm.ngoNeedId} onChange={handleDonationChange} className="md:col-span-2 px-3 py-2.5 rounded-lg border border-gray-200">
+                <option value="">Keinem Bedarf zuordnen (öffentliches Angebot)</option>
+                {needs.map((need) => (
+                  <option key={need.id} value={need.id}>
+                    {need.title} - {need.ngo_name || 'NGO'} ({need.city}, {need.country})
+                  </option>
+                ))}
+              </select>
+              <p className="md:col-span-2 text-xs text-gray-500 -mt-2">
+                Optional: Wenn kein Bedarf ausgewählt ist, sehen alle NGOs dein Angebot.
+              </p>
+              <input name="itemName" value={donationForm.itemName} onChange={handleDonationChange} placeholder="Artikelname" className="px-3 py-2.5 rounded-lg border border-gray-200" required />
+              <input name="category" value={donationForm.category} onChange={handleDonationChange} placeholder="Kategorie" className="px-3 py-2.5 rounded-lg border border-gray-200" required />
+              <input name="gender" value={donationForm.gender} onChange={handleDonationChange} placeholder="Geschlecht (optional)" className="px-3 py-2.5 rounded-lg border border-gray-200" />
+              <input name="size" value={donationForm.size} onChange={handleDonationChange} placeholder="Größe (optional)" className="px-3 py-2.5 rounded-lg border border-gray-200" />
+              <input type="number" min="1" name="quantity" value={donationForm.quantity} onChange={handleDonationChange} placeholder="Menge" className="px-3 py-2.5 rounded-lg border border-gray-200" required />
+              <select name="condition" value={donationForm.condition} onChange={handleDonationChange} className="px-3 py-2.5 rounded-lg border border-gray-200">
+                <option value="new">Neu</option>
+                <option value="like_new">Wie neu</option>
+                <option value="good">Gut</option>
+                <option value="acceptable">Akzeptabel</option>
+              </select>
+              <input name="country" value={donationForm.country} onChange={handleDonationChange} placeholder="Land" className="px-3 py-2.5 rounded-lg border border-gray-200" required />
+              <input name="city" value={donationForm.city} onChange={handleDonationChange} placeholder="Stadt" className="px-3 py-2.5 rounded-lg border border-gray-200" required />
+              <textarea name="notes" value={donationForm.notes} onChange={handleDonationChange} placeholder="Notizen (optional)" className="md:col-span-2 px-3 py-2.5 rounded-lg border border-gray-200 min-h-24" />
+              <div className="md:col-span-2">
+                <label htmlFor="donationImages" className="block text-sm font-medium text-gray-700 mb-1">Bilder (max. 5)</label>
+                <input id="donationImages" type="file" accept="image/*" multiple onChange={handleDonationImagesChange} className="w-full px-3 py-2.5 rounded-lg border border-gray-200 bg-white" />
+                {donationImages.length > 0 && (
+                  <p className="text-xs text-gray-500 mt-1">{donationImages.length} Bild(er) ausgewählt</p>
+                )}
+              </div>
+              <div className="md:col-span-2 flex gap-3">
+                <button disabled={submitting} className="bg-brand hover:bg-brand-light disabled:opacity-70 text-white px-5 py-2.5 rounded-lg font-medium">
+                  {donationSubmitText}
+                </button>
+                {editingDonationId && (
+                  <button type="button" onClick={() => { resetDonationForm(); navigate('/home'); }} className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-2.5 rounded-lg font-medium">
+                    Abbrechen
+                  </button>
+                )}
+              </div>
+            </form>
+          )}
+        </section>
+      )}
+
+      <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6 space-y-5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">Angebote & Bedarf</h2>
+            <p className="text-sm text-gray-500 mt-1">Alle neuen Einträge erscheinen automatisch in dieser Übersicht.</p>
+          </div>
+          <div className="inline-flex bg-slate-100 p-1 rounded-xl gap-1 overflow-x-auto">
+            {boardTabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveBoardTab(tab.id)}
+                className={`px-4 py-2 text-sm font-semibold rounded-lg whitespace-nowrap transition-colors ${
+                  activeBoardTab === tab.id
+                    ? 'bg-white text-brand shadow-sm'
+                    : 'text-slate-600 hover:text-slate-800'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {renderBoardContent()}
+      </section>
     </div>
   );
 };

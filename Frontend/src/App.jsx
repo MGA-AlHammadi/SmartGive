@@ -1,26 +1,15 @@
 import React from 'react'
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import Header from './components/Header'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Home from './pages/Home'
+import Landing from './pages/Landing'
+import NGOProfile from './pages/NGOProfile'
+import SpenderProfile from './pages/SpenderProfile'
+import EditAccount from './pages/EditAccount'
 import Footer from './components/Footer'
-
-// Temporäre Platzhalter für die Profilseiten
-const SpenderProfile = () => (
-  <div className="p-20 text-center animate-in fade-in duration-500">
-    <h1 className="text-3xl font-bold text-gray-900 mb-4">Mein Spender-Profil</h1>
-    <p className="text-gray-500 text-lg">Hier kannst du deine persönlichen Daten und Spenden verwalten.</p>
-  </div>
-);
-
-const NGOProfile = () => (
-  <div className="p-20 text-center animate-in fade-in duration-500">
-    <h1 className="text-3xl font-bold text-gray-900 mb-4">NGO Dashboard</h1>
-    <p className="text-gray-500 text-lg">Verwalte hier deine Bedarfe und sieh eingegangene Spenden ein.</p>
-  </div>
-);
 
 function App() {
   const location = useLocation();
@@ -54,12 +43,13 @@ function App() {
         {!hideHeaderFooter && <Header />}
         <main className="flex-1">
           <Routes>
-            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/home" element={<Home />} />
             <Route path="/spender-profile" element={<SpenderProfile />} />
             <Route path="/ngo-profile" element={<NGOProfile />} />
+            <Route path="/account/edit" element={<EditAccount />} />
           </Routes>
         </main>
       </div>
