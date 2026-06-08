@@ -5,6 +5,11 @@ const getUserByUsername = async (username) => {
     return result.rows[0]; // Returns the user object if found, otherwise undefined
 };
 
+const getUserById = async (userId) => {
+    const result = await db.query('SELECT *, is_company AS "isCompany" FROM users WHERE id = $1', [userId]);
+    return result.rows[0];
+};
+
 const updateLastLogin = async (userId) => {
     await db.query('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1', [userId]);
 };
@@ -21,6 +26,7 @@ const createUser = async (userData) => {
 
 module.exports = {
     getUserByUsername,
+    getUserById,
     updateLastLogin,
     createUser
 };
