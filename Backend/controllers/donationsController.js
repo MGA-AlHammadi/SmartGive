@@ -41,10 +41,6 @@ const createDonation = async (req, res) => {
             resolvedNgoUserId = need.ngo_user_id;
         }
 
-        if (!ngoNeedId && !resolvedNgoUserId) {
-            return res.status(400).json({ message: 'Bitte Bedarf oder NGO angeben' });
-        }
-
         const imageUrls = mapFilesToUrls(req.files);
 
         const donation = await donationService.createDonation({
@@ -132,7 +128,12 @@ const updateDonationStatus = async (req, res) => {
             return res.status(403).json({ message: 'Kein Zugriff auf diese Spende' });
         }
 
-        const updatedDonation = await donationService.updateDonationStatus(req.params.id, status);
+        const isPublicOffer = !donation.ngo_user_id && !donation.ngo_need_id;
+        if (isPublicOffer && status === 'rejected') {
+            return res.status(400).json({ message: 'Öffentliche Angebote können nur angenommen werden' });
+        }
+
+        const updatedDonation = await donationService.updateDonationStatus(req.params.id, status, req.user.id);
 
         await activityService.createActivity({
             userId: req.user.id,

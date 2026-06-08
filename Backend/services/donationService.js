@@ -52,12 +52,15 @@ const listMyDonations = async (donorUserId) => {
 const listReceivedDonations = async (ngoUserId) => {
     const result = await db.query(
         `SELECT d.*, nn.title AS need_title,
+                (d.ngo_need_id IS NULL AND d.ngo_user_id IS NULL) AS is_public_offer,
                 donor.first_name AS donor_first_name,
                 donor.last_name AS donor_last_name
          FROM donations d
          LEFT JOIN ngo_needs nn ON nn.id = d.ngo_need_id
          JOIN users donor ON donor.id = d.donor_user_id
-         WHERE d.ngo_user_id = $1 OR nn.ngo_user_id = $1
+         WHERE d.ngo_user_id = $1
+            OR nn.ngo_user_id = $1
+            OR (d.ngo_user_id IS NULL AND d.ngo_need_id IS NULL AND d.status = 'pending')
          ORDER BY d.created_at DESC`,
         [ngoUserId]
     );
@@ -65,13 +68,34 @@ const listReceivedDonations = async (ngoUserId) => {
     return result.rows;
 };
 
-const updateDonationStatus = async (donationId, status) => {
+const updateDonationStatus = async (donationId, status, actingNgoUserId = null) => {
+    // Claim public offer: assign ngo_user_id when NGO accepts an unclaimed donation
+    if (status === 'accepted' && actingNgoUserId) {
+        await db.query(
+            `UPDATE donations
+             SET ngo_user_id = COALESCE(ngo_user_id, $1)
+             WHERE id = $2 AND ngo_user_id IS NULL`,
+            [actingNgoUserId, donationId]
+        );
+    }
+
+    // Build timestamp fields in JS to avoid PostgreSQL parameter type conflicts
+    // when $1 is used in both SET status=$1 (varchar) and CASE WHEN comparisons (text)
+    const extraSets = [];
+    if (status === 'accepted') {
+        extraSets.push('accepted_at = CURRENT_TIMESTAMP');
+    }
+    if (status === 'delivered') {
+        extraSets.push('delivered_at = CURRENT_TIMESTAMP');
+    }
+
+    const extraSql = extraSets.length > 0 ? `, ${extraSets.join(', ')}` : '';
+
     const result = await db.query(
         `UPDATE donations
          SET status = $1,
-             accepted_at = CASE WHEN $1 = 'accepted' THEN CURRENT_TIMESTAMP ELSE accepted_at END,
-             delivered_at = CASE WHEN $1 = 'delivered' THEN CURRENT_TIMESTAMP ELSE delivered_at END,
              updated_at = CURRENT_TIMESTAMP
+             ${extraSql}
          WHERE id = $2
          RETURNING *`,
         [status, donationId]

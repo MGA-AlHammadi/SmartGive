@@ -15,6 +15,7 @@ const mapUserToResponse = (user) => ({
     companyCity: user.companyCity || user.company_city,
     phone: user.phone || null,
     profileDescription: user.profileDescription || user.profile_description || null,
+    createdAt: user.created_at || null,
     isCompany: user.isCompany ?? user.is_company
 });
 

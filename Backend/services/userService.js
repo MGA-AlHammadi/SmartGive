@@ -38,6 +38,7 @@ const buildUserSelectClause = async () => {
         company_name,
         company_address,
         is_company,
+        created_at,
         is_company AS "isCompany",
         first_name AS "firstName",
         last_name AS "lastName",
