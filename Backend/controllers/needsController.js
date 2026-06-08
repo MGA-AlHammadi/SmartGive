@@ -1,5 +1,6 @@
 const needService = require('../services/needService');
 const userService = require('../services/userService');
+const activityService = require('../services/activityService');
 
 const mapFilesToUrls = (files = []) => files.slice(0, 5).map((file) => `/uploads/${file.filename}`);
 
@@ -43,6 +44,12 @@ const createNeed = async (req, res) => {
             description: description?.trim() || null,
             neededBy: normalizedNeededBy || null,
             imageUrls
+        });
+
+        await activityService.createActivity({
+            userId: req.user.id,
+            title: 'Neuen Bedarf erstellt',
+            details: `${need.title} wurde als Bedarf veröffentlicht.`
         });
 
         res.status(201).json({ message: 'Bedarf erstellt', need });
@@ -99,6 +106,12 @@ const updateNeed = async (req, res) => {
             return res.status(404).json({ message: 'Bedarf nicht gefunden oder kein Zugriff' });
         }
 
+        await activityService.createActivity({
+            userId: req.user.id,
+            title: 'Bedarf aktualisiert',
+            details: `${updatedNeed.title} wurde bearbeitet.`
+        });
+
         res.json({ message: 'Bedarf aktualisiert', need: updatedNeed });
     } catch (err) {
         console.error('Fehler beim Aktualisieren des Bedarfs:', err);
@@ -118,6 +131,12 @@ const deleteNeed = async (req, res) => {
         if (!deleted) {
             return res.status(404).json({ message: 'Bedarf nicht gefunden oder kein Zugriff' });
         }
+
+        await activityService.createActivity({
+            userId: req.user.id,
+            title: 'Bedarf gelöscht',
+            details: 'Ein Bedarfseintrag wurde entfernt.'
+        });
 
         res.json({ message: 'Bedarf gelöscht' });
     } catch (err) {

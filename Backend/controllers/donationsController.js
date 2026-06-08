@@ -1,6 +1,7 @@
 const donationService = require('../services/donationService');
 const needService = require('../services/needService');
 const userService = require('../services/userService');
+const activityService = require('../services/activityService');
 
 const mapFilesToUrls = (files = []) => files.slice(0, 5).map((file) => `/uploads/${file.filename}`);
 
@@ -60,6 +61,12 @@ const createDonation = async (req, res) => {
             city,
             notes,
             imageUrls
+        });
+
+        await activityService.createActivity({
+            userId: req.user.id,
+            title: 'Spendenangebot erstellt',
+            details: `${donation.item_name} wurde als Angebot gesendet.`
         });
 
         res.status(201).json({ message: 'Spendenangebot erstellt', donation });
@@ -126,6 +133,13 @@ const updateDonationStatus = async (req, res) => {
         }
 
         const updatedDonation = await donationService.updateDonationStatus(req.params.id, status);
+
+        await activityService.createActivity({
+            userId: req.user.id,
+            title: 'Spendenstatus geändert',
+            details: `Ein Spendenangebot wurde auf "${status}" gesetzt.`
+        });
+
         res.json({ message: 'Spendenstatus aktualisiert', donation: updatedDonation });
     } catch (err) {
         console.error('Fehler beim Aktualisieren des Spendenstatus:', err);
@@ -152,6 +166,12 @@ const updateDonationByOwner = async (req, res) => {
             return res.status(404).json({ message: 'Spende nicht gefunden oder kein Zugriff' });
         }
 
+        await activityService.createActivity({
+            userId: req.user.id,
+            title: 'Spendenangebot aktualisiert',
+            details: `${updatedDonation.item_name} wurde bearbeitet.`
+        });
+
         res.json({ message: 'Spende aktualisiert', donation: updatedDonation });
     } catch (err) {
         console.error('Fehler beim Bearbeiten der Spende:', err);
@@ -171,6 +191,12 @@ const deleteDonationByOwner = async (req, res) => {
         if (!deletedDonation) {
             return res.status(404).json({ message: 'Spende nicht gefunden oder kein Zugriff' });
         }
+
+        await activityService.createActivity({
+            userId: req.user.id,
+            title: 'Spendenangebot gelöscht',
+            details: 'Ein eigenes Spendenangebot wurde entfernt.'
+        });
 
         res.json({ message: 'Spende gelöscht' });
     } catch (err) {
