@@ -31,6 +31,9 @@ const Home = () => {
   const [editingNeedId, setEditingNeedId] = useState(null);
   const [editingDonationId, setEditingDonationId] = useState(null);
   const [quickDonateNeedId, setQuickDonateNeedId] = useState(null);
+  const [selectedListing, setSelectedListing] = useState(null);
+  const [selectedListingType, setSelectedListingType] = useState(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quickDonationForm, setQuickDonationForm] = useState({
     quantity: '',
     description: '',
@@ -451,6 +454,36 @@ const Home = () => {
     }
   };
 
+  const openListingDetails = (type, item) => {
+    setSelectedListingType(type);
+    setSelectedListing(item);
+    setSelectedImageIndex(0);
+  };
+
+  const closeListingDetails = () => {
+    setSelectedListingType(null);
+    setSelectedListing(null);
+    setSelectedImageIndex(0);
+  };
+
+  const selectedImages = useMemo(() => {
+    if (!selectedListing) return [];
+    return normalizeImageUrls(selectedListing.image_urls).map(toAbsoluteImageUrl).filter(Boolean);
+  }, [selectedListing]);
+
+  const hasSelectedImages = selectedImages.length > 0;
+  const selectedCoverImage = hasSelectedImages ? selectedImages[selectedImageIndex] : '';
+
+  const showPreviousImage = () => {
+    if (!hasSelectedImages) return;
+    setSelectedImageIndex((prev) => (prev - 1 + selectedImages.length) % selectedImages.length);
+  };
+
+  const showNextImage = () => {
+    if (!hasSelectedImages) return;
+    setSelectedImageIndex((prev) => (prev + 1) % selectedImages.length);
+  };
+
   const renderNeedsContent = () => {
     if (loadingNeeds) {
       return <p className="text-gray-500">Lade Bedarfe...</p>;
@@ -470,7 +503,11 @@ const Home = () => {
           const isUrgent = needed > 0 && received / needed < 0.4;
 
           return (
-            <article key={need.id} className="rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm hover:shadow-lg transition-shadow">
+            <article
+              key={need.id}
+              onClick={() => openListingDetails('need', need)}
+              className="rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm hover:shadow-lg transition-shadow cursor-pointer"
+            >
               <div className="h-40 bg-slate-100 relative">
                 {coverImage ? (
                   <img
@@ -503,7 +540,7 @@ const Home = () => {
                   <p className="text-sm text-gray-500 line-clamp-2">{need.description}</p>
                 )}
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
                   {isNgo && Number(need.ngo_user_id) === Number(user.id) && (
                     <>
                       <button onClick={() => startEditNeed(need)} className="text-xs px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors">Bearbeiten</button>
@@ -521,7 +558,7 @@ const Home = () => {
                 </div>
 
                 {!isNgo && quickDonateNeedId === need.id && (
-                  <form onSubmit={(e) => handleQuickDonateSubmit(e, need)} className="border border-brand/20 bg-brand/5 rounded-xl p-3 grid grid-cols-1 gap-3">
+                  <form onClick={(e) => e.stopPropagation()} onSubmit={(e) => handleQuickDonateSubmit(e, need)} className="border border-brand/20 bg-brand/5 rounded-xl p-3 grid grid-cols-1 gap-3">
                     <h4 className="text-sm font-bold text-gray-900">Auf diesen Bedarf spenden</h4>
                     <input
                       type="number"
@@ -590,7 +627,11 @@ const Home = () => {
           }
 
           return (
-            <article key={donation.id} className="rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm hover:shadow-lg transition-shadow">
+            <article
+              key={donation.id}
+              onClick={() => openListingDetails('my-donation', donation)}
+              className="rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm hover:shadow-lg transition-shadow cursor-pointer"
+            >
               <div className="h-40 bg-slate-100">
                 {coverImage ? (
                   <img src={coverImage} alt="Spende Bild" className="w-full h-full object-cover" />
@@ -608,7 +649,7 @@ const Home = () => {
                 <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">{donationTargetLabel}</p>
                 {donation.notes && <p className="text-sm text-gray-500 line-clamp-2">{donation.notes}</p>}
 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
                   <span className="text-xs font-bold uppercase px-3 py-1 rounded-full bg-amber-100 text-amber-700">
                     {donation.status}
                   </span>
@@ -637,7 +678,11 @@ const Home = () => {
           const coverImage = donationImagesList[0] ? toAbsoluteImageUrl(donationImagesList[0]) : '';
 
           return (
-            <article key={donation.id} className="rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm hover:shadow-lg transition-shadow">
+            <article
+              key={donation.id}
+              onClick={() => openListingDetails('received-donation', donation)}
+              className="rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm hover:shadow-lg transition-shadow cursor-pointer"
+            >
               <div className="h-40 bg-slate-100 relative">
                 {coverImage ? (
                   <img src={coverImage} alt="Spende Bild" className="w-full h-full object-cover" />
@@ -660,7 +705,7 @@ const Home = () => {
                   <p>Bedarf: {donation.need_title || (donation.is_public_offer ? 'Öffentliches Angebot' : '-')}</p>
                 </div>
 
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
                   {donation.status === 'pending' && donation.is_public_offer && (
                     <button
                       onClick={() => handleDonationDecision(donation.id, 'accepted')}
@@ -837,6 +882,113 @@ const Home = () => {
 
         {renderBoardContent()}
       </section>
+
+      {selectedListing && (
+        <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm px-4 py-8 overflow-y-auto" onClick={closeListingDetails}>
+          <div className="mx-auto max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900">
+                {selectedListingType === 'need' ? 'Bedarf Details' : 'Spendenangebot Details'}
+              </h3>
+              <button
+                type="button"
+                onClick={closeListingDetails}
+                className="h-9 w-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2">
+              <div className="relative bg-slate-100 min-h-72">
+                {selectedCoverImage ? (
+                  <img src={selectedCoverImage} alt="Detailbild" className="w-full h-full object-cover min-h-72" />
+                ) : (
+                  <div className="w-full h-full min-h-72 bg-gradient-to-br from-slate-100 via-slate-50 to-emerald-50" />
+                )}
+
+                {selectedImages.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={showPreviousImage}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-black/45 hover:bg-black/60 text-white text-xl"
+                    >
+                      ‹
+                    </button>
+                    <button
+                      type="button"
+                      onClick={showNextImage}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-black/45 hover:bg-black/60 text-white text-xl"
+                    >
+                      ›
+                    </button>
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
+                      {selectedImages.map((_, index) => (
+                        <button
+                          key={`dot-${index}`}
+                          type="button"
+                          onClick={() => setSelectedImageIndex(index)}
+                          className={`h-2.5 w-2.5 rounded-full ${index === selectedImageIndex ? 'bg-white' : 'bg-white/50'}`}
+                          aria-label={`Bild ${index + 1}`}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="p-5 sm:p-6 space-y-4">
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {selectedListingType === 'need' ? selectedListing.title : selectedListing.item_name}
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {(selectedListing.category || '-')}
+                    {' • '}
+                    {(selectedListing.city || '-')}, {(selectedListing.country || '-')}
+                  </p>
+                </div>
+
+                {selectedListingType === 'need' ? (
+                  <div className="grid grid-cols-2 gap-2 text-sm text-gray-700 bg-slate-50 border border-slate-100 rounded-xl p-3">
+                    <p>Benötigt: <span className="font-semibold">{selectedListing.quantity_needed || 0}</span></p>
+                    <p>Erhalten: <span className="font-semibold">{selectedListing.quantity_received || 0}</span></p>
+                    <p>Größe: <span className="font-semibold">{selectedListing.size || '-'}</span></p>
+                    <p>Gender: <span className="font-semibold">{selectedListing.gender || '-'}</span></p>
+                    <p className="col-span-2">NGO: <span className="font-semibold">{selectedListing.ngo_name || 'NGO'}</span></p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2 text-sm text-gray-700 bg-slate-50 border border-slate-100 rounded-xl p-3">
+                    <p>Menge: <span className="font-semibold">{selectedListing.quantity || 0}</span></p>
+                    <p>Status: <span className="font-semibold uppercase">{selectedListing.status || '-'}</span></p>
+                    <p>Größe: <span className="font-semibold">{selectedListing.size || '-'}</span></p>
+                    <p>Zustand: <span className="font-semibold">{selectedListing.condition || '-'}</span></p>
+                    {selectedListingType === 'received-donation' && (
+                      <p className="col-span-2">Von: <span className="font-semibold">{selectedListing.donor_first_name || ''} {selectedListing.donor_last_name || ''}</span></p>
+                    )}
+                    <p className="col-span-2">Bedarf: <span className="font-semibold">{selectedListing.need_title || (selectedListing.is_public_offer ? 'Öffentliches Angebot' : '-')}</span></p>
+                  </div>
+                )}
+
+                {selectedListingType === 'need' && selectedListing.description && (
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Beschreibung</p>
+                    <p className="text-sm text-gray-700 leading-relaxed">{selectedListing.description}</p>
+                  </div>
+                )}
+
+                {selectedListingType !== 'need' && selectedListing.notes && (
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Notizen</p>
+                    <p className="text-sm text-gray-700 leading-relaxed">{selectedListing.notes}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

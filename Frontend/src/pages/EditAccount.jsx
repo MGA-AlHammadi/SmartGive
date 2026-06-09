@@ -80,7 +80,12 @@ const EditAccount = () => {
       localStorage.setItem('user', JSON.stringify(updatedUser));
 
       toast.success('Konto erfolgreich aktualisiert');
-      navigate(updatedUser.isCompany ? '/ngo-profile' : '/spender-profile');
+      navigate(updatedUser.isCompany ? '/ngo-profile' : '/spender-profile', {
+        state: {
+          refreshedAt: Date.now(),
+          updatedProfile: updatedUser,
+        },
+      });
     } catch (error) {
       toast.error(error.message || 'Konto konnte nicht aktualisiert werden');
     } finally {

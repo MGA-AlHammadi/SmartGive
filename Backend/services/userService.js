@@ -1,20 +1,13 @@
 const db = require('../config/db');
 
-let usersColumnsCache = null;
-
 const getUsersColumns = async () => {
-    if (usersColumnsCache) {
-        return usersColumnsCache;
-    }
-
     const result = await db.query(
         `SELECT column_name
          FROM information_schema.columns
          WHERE table_schema = 'public' AND table_name = 'users'`
     );
 
-    usersColumnsCache = new Set(result.rows.map((row) => row.column_name));
-    return usersColumnsCache;
+    return new Set(result.rows.map((row) => row.column_name));
 };
 
 const hasUsersColumn = async (columnName) => {

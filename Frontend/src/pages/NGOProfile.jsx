@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Mail, MapPin, Phone, ShieldCheck } from 'lucide-react';
 import { fetchNeeds } from '../services/marketplaceService';
 import { fetchMyActivities, fetchMyProfile } from '../services/authService';
 
 const NGOProfile = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const token = localStorage.getItem('token');
   const user = useMemo(() => JSON.parse(localStorage.getItem('user') || '{}'), []);
 
@@ -15,6 +16,14 @@ const NGOProfile = () => {
   const [profile, setProfile] = useState(user);
 
   const IMAGE_BASE_URL = import.meta.env.VITE_API_ORIGIN || 'http://localhost:5000';
+
+  useEffect(() => {
+    const latestProfile = location.state?.updatedProfile;
+    if (latestProfile) {
+      setProfile(latestProfile);
+      localStorage.setItem('user', JSON.stringify(latestProfile));
+    }
+  }, [location.state]);
 
   useEffect(() => {
     if (!token) {
@@ -49,7 +58,7 @@ const NGOProfile = () => {
     };
 
     loadNgoNeeds();
-  }, [navigate, token, user.id]);
+  }, [navigate, token, user.id, location.state?.refreshedAt]);
 
   const normalizeImageUrls = (value) => {
     if (Array.isArray(value)) return value;

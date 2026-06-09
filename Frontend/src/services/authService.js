@@ -44,6 +44,7 @@ export const registerUser = async (userData) => {
 export const fetchMyProfile = async () => {
   const response = await fetch(`${API_URL}/me`, {
     headers: buildAuthHeaders(),
+    cache: 'no-store',
   });
 
   const data = await response.json();
@@ -57,6 +58,7 @@ export const updateMyProfile = async (profileData) => {
   const response = await fetch(`${API_URL}/me`, {
     method: 'PATCH',
     headers: buildAuthHeaders(),
+    cache: 'no-store',
     body: JSON.stringify(profileData),
   });
 

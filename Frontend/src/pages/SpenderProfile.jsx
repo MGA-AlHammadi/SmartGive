@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { BadgeCheck, CalendarDays, CheckCheck, Handshake, Mail, MapPin, Shirt } from 'lucide-react';
 import { fetchMyActivities, fetchMyProfile } from '../services/authService';
 import { fetchMyDonations } from '../services/marketplaceService';
 
 const SpenderProfile = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const token = localStorage.getItem('token');
   const localUser = useMemo(() => JSON.parse(localStorage.getItem('user') || '{}'), []);
 
@@ -13,6 +14,14 @@ const SpenderProfile = () => {
   const [profile, setProfile] = useState(localUser);
   const [myDonations, setMyDonations] = useState([]);
   const [activities, setActivities] = useState([]);
+
+  useEffect(() => {
+    const latestProfile = location.state?.updatedProfile;
+    if (latestProfile) {
+      setProfile(latestProfile);
+      localStorage.setItem('user', JSON.stringify(latestProfile));
+    }
+  }, [location.state]);
 
   useEffect(() => {
     if (!token) {
@@ -44,7 +53,7 @@ const SpenderProfile = () => {
     };
 
     loadProfilePage();
-  }, [navigate, token]);
+  }, [navigate, token, location.state?.refreshedAt]);
 
   const formatRelativeTime = (createdAt) => {
     if (!createdAt) return '';
@@ -70,7 +79,7 @@ const SpenderProfile = () => {
     .map((name) => name.charAt(0).toUpperCase())
     .join('');
 
-  const location = [profile.companyCity || profile.city, profile.companyCountry || profile.country]
+  const profileLocation = [profile.companyCity || profile.city, profile.companyCountry || profile.country]
     .filter(Boolean)
     .join(', ');
 
@@ -123,7 +132,7 @@ const SpenderProfile = () => {
               </div>
 
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-[#55665d]">
-                {location && <p className="inline-flex items-center gap-1"><MapPin size={14} /> {location}</p>}
+                {profileLocation && <p className="inline-flex items-center gap-1"><MapPin size={14} /> {profileLocation}</p>}
                 {memberSince && <p className="inline-flex items-center gap-1"><CalendarDays size={14} /> Mitglied seit: {memberSince}</p>}
                 {profile.email && <p className="inline-flex items-center gap-1"><Mail size={14} /> {profile.email}</p>}
               </div>
