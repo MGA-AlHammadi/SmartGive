@@ -1,11 +1,52 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { RefreshCcw, User, LogOut, Bell, MessageSquare, Search, PlusCircle } from 'lucide-react';
+import { RefreshCcw, User, LogOut, Bell, MessageSquare, Search, PlusCircle, CheckCircle2, Clock, XCircle } from 'lucide-react';
+import { fetchMyActivities } from '../services/authService';
+import { formatDistanceToNow } from 'date-fns';
+import { de } from 'date-fns/locale';
 
 const Header = () => {
   const navigate = useNavigate();
+  const [activities, setActivities] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notificationRef = useRef(null);
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const token = localStorage.getItem('token');
+
+  useEffect(() => {
+    if (token) {
+      loadActivities();
+      // Poll for new notifications every 30 seconds
+      const interval = setInterval(loadActivities, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const loadActivities = async () => {
+    try {
+      const data = await fetchMyActivities(8);
+      setActivities(data.activities || []);
+    } catch (err) {
+      console.error('Failed to load notifications:', err);
+    }
+  };
+
+  const getActivityIcon = (title) => {
+    const lowerTitle = title.toLowerCase();
+    if (lowerTitle.includes('angenommen') || lowerTitle.includes('erfolgreich') || lowerTitle.includes('erstellt')) return <CheckCircle2 size={16} className="text-green-500" />;
+    if (lowerTitle.includes('abgelehnt') || lowerTitle.includes('gelöscht') || lowerTitle.includes('fehler')) return <XCircle size={16} className="text-red-500" />;
+    return <Clock size={16} className="text-blue-500" />;
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -99,11 +140,67 @@ const Header = () => {
           </button>
 
           {/* Benachrichtigungen Icon */}
-          <button className="p-2 text-gray-500 hover:text-brand hover:bg-gray-50 rounded-full transition-all relative group">
-            <Bell size={20} />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Meldungen</span>
-          </button>
+          <div className="relative" ref={notificationRef}>
+            <button 
+              onClick={() => setShowNotifications(!showNotifications)}
+              className={`p-2 rounded-full transition-all relative group ${
+                showNotifications ? 'bg-brand/10 text-brand' : 'text-gray-500 hover:text-brand hover:bg-gray-50'
+              }`}
+            >
+              <Bell size={20} />
+              {activities.length > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+              )}
+              <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Meldungen</span>
+            </button>
+
+            {/* Benachrichtigungs-Dropdown */}
+            {showNotifications && (
+              <div className="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-[60] animate-in slide-in-from-top-2 duration-200">
+                <div className="px-4 py-3 border-b border-gray-50 flex justify-between items-center">
+                  <h3 className="font-bold text-gray-900 text-sm">Benachrichtigungen</h3>
+                  <span className="text-[10px] bg-brand/10 text-brand px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Neu</span>
+                </div>
+                
+                <div className="max-h-[350px] overflow-y-auto">
+                  {activities.length > 0 ? (
+                    activities.map((activity) => (
+                      <div key={activity.id} className="px-4 py-3 hover:bg-gray-50 border-b border-gray-50 last:border-0 transition-colors cursor-default">
+                        <div className="flex gap-3">
+                          <div className="mt-0.5">{getActivityIcon(activity.title)}</div>
+                          <div className="flex-1">
+                            <p className="text-sm font-bold text-gray-900 leading-snug">{activity.title}</p>
+                            <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">{activity.details}</p>
+                            <p className="text-[10px] text-gray-400 mt-1.5 flex items-center gap-1">
+                              <Clock size={10} />
+                              {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true, locale: de })}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-4 py-8 text-center">
+                      <div className="bg-gray-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <Bell size={20} className="text-gray-300" />
+                      </div>
+                      <p className="text-sm text-gray-500 font-medium">Keine neuen Meldungen</p>
+                    </div>
+                  )}
+                </div>
+                
+                {activities.length > 0 && (
+                  <Link 
+                    to={user.isCompany ? "/ngo-profile" : "/spender-profile"} 
+                    onClick={() => setShowNotifications(false)}
+                    className="block w-full text-center py-2.5 text-xs font-bold text-brand hover:bg-brand/5 border-t border-gray-50 transition-colors"
+                  >
+                    Alle Aktivitäten ansehen
+                  </Link>
+                )}
+              </div>
+            )}
+          </div>
         </div>
         
         <div className="h-8 w-px bg-gray-100 mx-1 hidden sm:block"></div>
