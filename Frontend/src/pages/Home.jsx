@@ -14,6 +14,9 @@ import {
   updateMyNeed,
 } from '../services/marketplaceService';
 
+const CATEGORIES = ['Oberteil', 'Unterteil', 'Schuhe', 'Zubehör', 'Sonstiges'];
+const GENDERS = ['Herren', 'Frauen', 'Kinder', 'Unisex'];
+
 const Home = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -781,8 +784,21 @@ const Home = () => {
           {showNeedForm ? (
             <form onSubmit={handleNeedSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input name="title" value={needForm.title} onChange={handleNeedChange} placeholder="Titel" className="px-3 py-2.5 rounded-lg border border-gray-200" required />
-              <input name="category" value={needForm.category} onChange={handleNeedChange} placeholder="Kategorie" className="px-3 py-2.5 rounded-lg border border-gray-200" required />
-              <input name="gender" value={needForm.gender} onChange={handleNeedChange} placeholder="Geschlecht (optional)" className="px-3 py-2.5 rounded-lg border border-gray-200" />
+              
+              <select name="category" value={needForm.category} onChange={handleNeedChange} className="px-3 py-2.5 rounded-lg border border-gray-200" required>
+                <option value="">Kategorie auswählen</option>
+                {CATEGORIES.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+
+              <select name="gender" value={needForm.gender} onChange={handleNeedChange} className="px-3 py-2.5 rounded-lg border border-gray-200">
+                <option value="">Geschlecht (optional)</option>
+                {GENDERS.map(g => (
+                  <option key={g} value={g}>{g}</option>
+                ))}
+              </select>
+
               <input name="size" value={needForm.size} onChange={handleNeedChange} placeholder="Größe (optional)" className="px-3 py-2.5 rounded-lg border border-gray-200" />
               <input type="number" min="1" name="quantityNeeded" value={needForm.quantityNeeded} onChange={handleNeedChange} placeholder="Benötigte Menge" className="px-3 py-2.5 rounded-lg border border-gray-200" required />
               <input type="date" name="neededBy" value={needForm.neededBy} onChange={handleNeedChange} className="px-3 py-2.5 rounded-lg border border-gray-200" />
@@ -821,8 +837,21 @@ const Home = () => {
                 Optional: Wenn kein Bedarf ausgewählt ist, sehen alle NGOs dein Angebot.
               </p>
               <input name="itemName" value={donationForm.itemName} onChange={handleDonationChange} placeholder="Artikelname" className="px-3 py-2.5 rounded-lg border border-gray-200" required />
-              <input name="category" value={donationForm.category} onChange={handleDonationChange} placeholder="Kategorie" className="px-3 py-2.5 rounded-lg border border-gray-200" required />
-              <input name="gender" value={donationForm.gender} onChange={handleDonationChange} placeholder="Geschlecht (optional)" className="px-3 py-2.5 rounded-lg border border-gray-200" />
+              
+              <select name="category" value={donationForm.category} onChange={handleDonationChange} className="px-3 py-2.5 rounded-lg border border-gray-200" required>
+                <option value="">Kategorie auswählen</option>
+                {CATEGORIES.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+
+              <select name="gender" value={donationForm.gender} onChange={handleDonationChange} className="px-3 py-2.5 rounded-lg border border-gray-200">
+                <option value="">Geschlecht (optional)</option>
+                {GENDERS.map(g => (
+                  <option key={g} value={g}>{g}</option>
+                ))}
+              </select>
+
               <input name="size" value={donationForm.size} onChange={handleDonationChange} placeholder="Größe (optional)" className="px-3 py-2.5 rounded-lg border border-gray-200" />
               <input type="number" min="1" name="quantity" value={donationForm.quantity} onChange={handleDonationChange} placeholder="Menge" className="px-3 py-2.5 rounded-lg border border-gray-200" required />
               <select name="condition" value={donationForm.condition} onChange={handleDonationChange} className="px-3 py-2.5 rounded-lg border border-gray-200">
