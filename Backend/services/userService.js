@@ -20,6 +20,7 @@ const buildUserSelectClause = async () => {
     const hasCompanyCity = await hasUsersColumn('company_city');
     const hasPhone = await hasUsersColumn('phone');
     const hasProfileDescription = await hasUsersColumn('profile_description');
+    const hasProfilePicture = await hasUsersColumn('profile_picture');
 
     return `
         id,
@@ -40,7 +41,8 @@ const buildUserSelectClause = async () => {
         ${hasCompanyCountry ? 'company_country' : 'NULL'} AS "companyCountry",
         ${hasCompanyCity ? 'company_city' : 'NULL'} AS "companyCity",
         ${hasPhone ? 'phone' : 'NULL'} AS phone,
-        ${hasProfileDescription ? 'profile_description' : 'NULL'} AS "profileDescription"
+        ${hasProfileDescription ? 'profile_description' : 'NULL'} AS "profileDescription",
+        ${hasProfilePicture ? 'profile_picture' : 'NULL'} AS "profilePicture"
     `;
 };
 
@@ -136,7 +138,8 @@ const updateUserProfile = async (userId, userData) => {
         companyCountry,
         companyCity,
         phone,
-        profileDescription
+        profileDescription,
+        profilePicture
     } = userData;
 
     const companyAddress = companyCity && companyCountry
@@ -170,6 +173,11 @@ const updateUserProfile = async (userId, userData) => {
     if (await hasUsersColumn('profile_description')) {
         values.push(profileDescription || null);
         setParts.push(`profile_description = $${values.length}`);
+    }
+
+    if (await hasUsersColumn('profile_picture')) {
+        values.push(profilePicture || null);
+        setParts.push(`profile_picture = COALESCE($${values.length}, profile_picture)`);
     }
 
     setParts.push('updated_at = CURRENT_TIMESTAMP');

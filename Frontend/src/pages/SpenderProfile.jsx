@@ -119,8 +119,16 @@ const SpenderProfile = () => {
 
         <div className="p-4 sm:p-6">
           <div className="-mt-16 sm:-mt-20 rounded-2xl border border-[#dce5df] bg-white p-4 sm:p-5 shadow-sm flex flex-col lg:flex-row lg:items-center gap-4">
-            <div className="h-24 w-24 rounded-full bg-[#e7f0eb] border-4 border-white shadow-sm text-[#145539] flex items-center justify-center text-2xl font-bold">
-              {initials || 'SP'}
+            <div className="h-24 w-24 rounded-full overflow-hidden bg-[#e7f0eb] border-4 border-white shadow-sm text-[#145539] flex items-center justify-center text-2xl font-bold">
+              {profile.profilePicture ? (
+                <img 
+                  src={`http://localhost:5000${profile.profilePicture}`} 
+                  alt={fullName} 
+                  className="w-full h-full object-cover" 
+                />
+              ) : (
+                initials || 'SP'
+              )}
             </div>
 
             <div className="flex-1 space-y-2">

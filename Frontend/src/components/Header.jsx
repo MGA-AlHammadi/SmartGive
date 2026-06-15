@@ -216,8 +216,16 @@ const Header = () => {
           </div>
           
           <div className="group relative">
-            <button className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 text-slate-600 border-2 border-white hover:border-brand/20 hover:text-brand transition-all shadow-sm">
-              <User size={20} />
+            <button className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 text-slate-600 border-2 border-white overflow-hidden hover:border-brand/20 hover:text-brand transition-all shadow-sm">
+              {user.profilePicture ? (
+                <img 
+                  src={`http://localhost:5000${user.profilePicture}`} 
+                  alt="Avatar" 
+                  className="w-full h-full object-cover" 
+                />
+              ) : (
+                <User size={20} />
+              )}
             </button>
             
             <div className="absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all translate-y-2 group-hover:translate-y-0">

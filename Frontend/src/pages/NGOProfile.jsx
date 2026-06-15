@@ -114,8 +114,16 @@ const NGOProfile = () => {
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 bg-white rounded-2xl border border-[#dce5df] p-5 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-            <div className="h-14 w-14 rounded-xl bg-[#145539] text-white flex items-center justify-center font-bold text-lg shadow-sm">
-              {profileName.charAt(0).toUpperCase()}
+            <div className="h-20 w-20 rounded-xl overflow-hidden bg-[#145539] text-white flex items-center justify-center font-bold text-2xl shadow-sm border-2 border-[#145539]">
+              {profile.profilePicture ? (
+                <img 
+                  src={`http://localhost:5000${profile.profilePicture}`} 
+                  alt={profileName} 
+                  className="w-full h-full object-cover" 
+                />
+              ) : (
+                profileName.charAt(0).toUpperCase()
+              )}
             </div>
 
             <div className="flex-1">

@@ -55,11 +55,21 @@ export const fetchMyProfile = async () => {
 };
 
 export const updateMyProfile = async (profileData) => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    throw new Error('Bitte melden Sie sich erneut an');
+  }
+
+  const isFormData = profileData instanceof FormData;
+
   const response = await fetch(`${API_URL}/me`, {
     method: 'PATCH',
-    headers: buildAuthHeaders(),
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+    },
     cache: 'no-store',
-    body: JSON.stringify(profileData),
+    body: isFormData ? profileData : JSON.stringify(profileData),
   });
 
   const data = await response.json();

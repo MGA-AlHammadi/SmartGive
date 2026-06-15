@@ -10,6 +10,9 @@ const EditAccount = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isCompany, setIsCompany] = useState(false);
+  const [currentProfilePic, setCurrentProfilePic] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -35,6 +38,7 @@ const EditAccount = () => {
         const user = data.user || {};
 
         setIsCompany(Boolean(user.isCompany));
+        setCurrentProfilePic(user.profilePicture);
         setFormData({
           firstName: user.firstName || '',
           lastName: user.lastName || '',
@@ -60,22 +64,33 @@ const EditAccount = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
 
     try {
-      const payload = {
-        firstName: formData.firstName.trim(),
-        lastName: formData.lastName.trim(),
-        companyName: formData.companyName.trim(),
-        companyCountry: formData.companyCountry.trim(),
-        companyCity: formData.companyCity.trim(),
-        phone: formData.phone.trim(),
-        profileDescription: formData.profileDescription.trim(),
-      };
+      const data = new FormData();
+      data.append('firstName', formData.firstName.trim());
+      data.append('lastName', formData.lastName.trim());
+      data.append('companyName', formData.companyName.trim());
+      data.append('companyCountry', formData.companyCountry.trim());
+      data.append('companyCity', formData.companyCity.trim());
+      data.append('phone', formData.phone.trim());
+      data.append('profileDescription', formData.profileDescription.trim());
 
-      const response = await updateMyProfile(payload);
+      if (selectedFile) {
+        data.append('profilePicture', selectedFile);
+      }
+
+      const response = await updateMyProfile(data);
       const updatedUser = response.user || {};
       localStorage.setItem('user', JSON.stringify(updatedUser));
 
@@ -110,6 +125,33 @@ const EditAccount = () => {
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <div className="flex flex-col sm:flex-row items-center gap-6 pb-4 mb-4 border-b border-[#dce5df]">
+            <div className="relative group">
+              <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-[#145539] bg-slate-50 flex items-center justify-center">
+                {previewUrl ? (
+                  <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                ) : currentProfilePic ? (
+                  <img src={`http://localhost:5000${currentProfilePic}`} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="text-[#145539] text-3xl font-bold">
+                    {(formData.firstName?.[0] || formData.companyName?.[0] || '?').toUpperCase()}
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex-1">
+              <label className="block text-sm font-semibold text-[#173d2f] mb-2">Profilbild aktualisieren</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#e8f3ee] file:text-[#145539] hover:file:bg-[#d1e7dc] transition-colors cursor-pointer"
+              />
+              <p className="text-xs text-[#5f6e66] mt-2 italic">Nur Bilddateien (JPG, PNG, GIF), max. 5MB</p>
+            </div>
+          </div>
+
           {!isCompany && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>

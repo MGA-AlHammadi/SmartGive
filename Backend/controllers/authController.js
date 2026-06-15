@@ -15,6 +15,7 @@ const mapUserToResponse = (user) => ({
     companyCity: user.companyCity || user.company_city,
     phone: user.phone || null,
     profileDescription: user.profileDescription || user.profile_description || null,
+    profilePicture: user.profilePicture || user.profile_picture || null,
     createdAt: user.created_at || null,
     isCompany: user.isCompany ?? user.is_company
 });
@@ -145,6 +146,8 @@ const updateMe = async (req, res) => {
             return res.status(400).json({ message: 'Land und Stadt müssen zusammen angegeben werden' });
         }
 
+        const profilePicture = req.file ? `/uploads/${req.file.filename}` : undefined;
+
         const updatedUser = await userService.updateUserProfile(req.user.id, {
             firstName: firstName?.trim() || null,
             lastName: lastName?.trim() || null,
@@ -152,7 +155,8 @@ const updateMe = async (req, res) => {
             companyCountry: companyCountry?.trim() || null,
             companyCity: companyCity?.trim() || null,
             phone: phone?.trim() || null,
-            profileDescription: profileDescription?.trim() || null
+            profileDescription: profileDescription?.trim() || null,
+            profilePicture: profilePicture
         });
 
         await activityService.createActivity({
