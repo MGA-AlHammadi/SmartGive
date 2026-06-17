@@ -121,11 +121,7 @@ const Header = () => {
         {/* Schnell-Aktion: Nur Spender sehen "Spenden", NGOs sehen "Bedarf melden" */}
         <button 
           onClick={() => navigate(user.isCompany ? '/home?create=need' : '/home?create=donation')}
-          className={`hidden sm:flex items-center gap-2 text-white px-4 py-2 rounded-full text-sm font-bold transition-colors shadow-md ${
-            user.isCompany 
-            ? "bg-blue-600 hover:bg-blue-700 shadow-blue-500/10" 
-            : "bg-brand hover:bg-brand-light shadow-brand-500/10"
-          }`}
+          className="hidden sm:flex items-center gap-2 text-white px-4 py-2 rounded-full text-sm font-bold bg-brand hover:bg-brand-light transition-colors shadow-md shadow-brand-500/10"
         >
           <PlusCircle size={18} />
           <span>{user.isCompany ? "Bedarf melden" : "Spenden"}</span>

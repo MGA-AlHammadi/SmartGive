@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { Filter, RotateCcw, ChevronDown } from 'lucide-react';
 import {
   createDonation,
   createNeed,
@@ -37,6 +38,14 @@ const Home = () => {
   const [selectedListing, setSelectedListing] = useState(null);
   const [selectedListingType, setSelectedListingType] = useState(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  
+  // Filter states
+  const [filters, setFilters] = useState({
+    category: '',
+    size: '',
+    location: '',
+  });
+
   const [quickDonationForm, setQuickDonationForm] = useState({
     quantity: '',
     description: '',
@@ -487,18 +496,80 @@ const Home = () => {
     setSelectedImageIndex((prev) => (prev + 1) % selectedImages.length);
   };
 
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const resetFilters = () => {
+    setFilters({ category: '', size: '', location: '' });
+  };
+
+  const currentDataForFilter = useMemo(() => {
+    if (activeBoardTab === 'needs') return needs;
+    if (activeBoardTab === 'my-donations') return myDonations;
+    if (activeBoardTab === 'incoming-donations') return receivedDonations;
+    return [];
+  }, [activeBoardTab, needs, myDonations, receivedDonations]);
+
+  const getAllLocations = () => {
+    const locations = currentDataForFilter.map(item => item.city).filter(Boolean);
+    return [...new Set(locations)].sort();
+  };
+
+  const getAllSizes = () => {
+    const sizes = currentDataForFilter.map(item => item.size).filter(Boolean);
+    return [...new Set(sizes)].sort();
+  };
+
+  const filteredNeeds = useMemo(() => {
+    return needs.filter((need) => {
+      const matchCategory = !filters.category || need.category === filters.category;
+      const matchSize = !filters.size || need.size === filters.size;
+      const matchLocation = !filters.location || need.city === filters.location;
+      return matchCategory && matchSize && matchLocation;
+    });
+  }, [needs, filters]);
+
+  const filteredMyDonations = useMemo(() => {
+    return myDonations.filter((donation) => {
+      const matchCategory = !filters.category || donation.category === filters.category;
+      const matchSize = !filters.size || donation.size === filters.size;
+      const matchLocation = !filters.location || donation.city === filters.location;
+      return matchCategory && matchSize && matchLocation;
+    });
+  }, [myDonations, filters]);
+
+  const filteredReceivedDonations = useMemo(() => {
+    return receivedDonations.filter((donation) => {
+      const matchCategory = !filters.category || donation.category === filters.category;
+      const matchSize = !filters.size || donation.size === filters.size;
+      const matchLocation = !filters.location || donation.city === filters.location;
+      return matchCategory && matchSize && matchLocation;
+    });
+  }, [receivedDonations, filters]);
+
   const renderNeedsContent = () => {
     if (loadingNeeds) {
       return <p className="text-gray-500">Lade Bedarfe...</p>;
     }
 
-    if (needs.length === 0) {
-      return <p className="text-gray-500">Noch keine Bedarfe vorhanden.</p>;
+    if (filteredNeeds.length === 0) {
+      return (
+        <div className="py-10 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+          <p className="text-slate-500">Keine passenden Bedarfe für die gewählten Filter gefunden.</p>
+          {(filters.category || filters.size || filters.location) && (
+            <button onClick={resetFilters} className="mt-2 text-brand font-bold text-sm hover:underline">
+              Alle Filter zurücksetzen
+            </button>
+          )}
+        </div>
+      );
     }
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-        {needs.map((need) => {
+        {filteredNeeds.map((need) => {
           const needImagesList = normalizeImageUrls(need.image_urls);
           const coverImage = needImagesList[0] ? toAbsoluteImageUrl(needImagesList[0]) : '';
           const needed = Number(need.quantity_needed || 0);
@@ -616,9 +687,20 @@ const Home = () => {
       return <p className="text-gray-500">Du hast noch keine Spendenangebote gesendet.</p>;
     }
 
+    if (filteredMyDonations.length === 0) {
+      return (
+        <div className="py-10 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+          <p className="text-slate-500">Keine passenden Angebote gefunden.</p>
+          <button onClick={resetFilters} className="mt-2 text-brand font-bold text-sm hover:underline">
+            Alle Filter zurücksetzen
+          </button>
+        </div>
+      );
+    }
+
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-        {myDonations.map((donation) => {
+        {filteredMyDonations.map((donation) => {
           const donationImagesList = normalizeImageUrls(donation.image_urls);
           const coverImage = donationImagesList[0] ? toAbsoluteImageUrl(donationImagesList[0]) : '';
           let donationTargetLabel = 'Öffentliches Angebot';
@@ -674,9 +756,20 @@ const Home = () => {
       return <p className="text-gray-500">Noch keine eingegangenen Spendenangebote.</p>;
     }
 
+    if (filteredReceivedDonations.length === 0) {
+      return (
+        <div className="py-10 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+          <p className="text-slate-500">Keine passenden Angebote gefunden.</p>
+          <button onClick={resetFilters} className="mt-2 text-brand font-bold text-sm hover:underline">
+            Alle Filter zurücksetzen
+          </button>
+        </div>
+      );
+    }
+
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-        {receivedDonations.map((donation) => {
+        {filteredReceivedDonations.map((donation) => {
           const donationImagesList = normalizeImageUrls(donation.image_urls);
           const coverImage = donationImagesList[0] ? toAbsoluteImageUrl(donationImagesList[0]) : '';
 
@@ -908,6 +1001,68 @@ const Home = () => {
             ))}
           </div>
         </div>
+
+        {/* Filter Bar */}
+        <div className="flex flex-wrap items-center gap-3 py-4 border-t border-gray-50">
+          <div className="flex items-center gap-2 text-gray-500 mr-2">
+            <Filter size={18} />
+            <span className="text-sm font-medium">Filtern:</span>
+          </div>
+
+            <div className="relative group min-w-[140px]">
+              <select
+                name="category"
+                value={filters.category}
+                onChange={handleFilterChange}
+                className="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand/20 cursor-pointer pr-10"
+              >
+                <option value="">Kategorie</option>
+                {CATEGORIES.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+
+            <div className="relative group min-w-[140px]">
+              <select
+                name="size"
+                value={filters.size}
+                onChange={handleFilterChange}
+                className="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand/20 cursor-pointer pr-10"
+              >
+                <option value="">Größe</option>
+                {getAllSizes().map(sz => (
+                  <option key={sz} value={sz}>{sz}</option>
+                ))}
+              </select>
+              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+
+            <div className="relative group min-w-[140px]">
+              <select
+                name="location"
+                value={filters.location}
+                onChange={handleFilterChange}
+                className="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand/20 cursor-pointer pr-10"
+              >
+                <option value="">Standort</option>
+                {getAllLocations().map(loc => (
+                  <option key={loc} value={loc}>{loc}</option>
+                ))}
+              </select>
+              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+
+            <button
+              onClick={resetFilters}
+              className="ml-auto flex items-center gap-2 text-brand font-bold text-sm hover:underline"
+            >
+              <RotateCcw size={14} />
+              Filter zurücksetzen
+            </button>
+          </div>
+        
 
         {renderBoardContent()}
       </section>
