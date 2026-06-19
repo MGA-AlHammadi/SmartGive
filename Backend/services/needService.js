@@ -48,10 +48,10 @@ const listNeeds = async (filters) => {
         conditions.push(`country = $${values.length}`);
     }
 
-    if (status) {
+    if (status && status !== 'all') {
         values.push(status);
         conditions.push(`status = $${values.length}`);
-    } else {
+    } else if (!status) {
         values.push('active');
         conditions.push(`status = $${values.length}`);
     }

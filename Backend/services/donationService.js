@@ -69,6 +69,12 @@ const listReceivedDonations = async (ngoUserId) => {
 };
 
 const updateDonationStatus = async (donationId, status, actingNgoUserId = null) => {
+    // Zuerst aktuellen Status holen, um festzustellen, ob sich der Status zu 'delivered' ändert
+    const currentResult = await db.query('SELECT status, ngo_need_id, quantity FROM donations WHERE id = $1', [donationId]);
+    const currentDonation = currentResult.rows[0];
+
+    if (!currentDonation) return null;
+
     // Claim public offer: assign ngo_user_id when NGO accepts an unclaimed donation
     if (status === 'accepted' && actingNgoUserId) {
         await db.query(
@@ -80,7 +86,6 @@ const updateDonationStatus = async (donationId, status, actingNgoUserId = null) 
     }
 
     // Build timestamp fields in JS to avoid PostgreSQL parameter type conflicts
-    // when $1 is used in both SET status=$1 (varchar) and CASE WHEN comparisons (text)
     const extraSets = [];
     if (status === 'accepted') {
         extraSets.push('accepted_at = CURRENT_TIMESTAMP');
@@ -101,7 +106,21 @@ const updateDonationStatus = async (donationId, status, actingNgoUserId = null) 
         [status, donationId]
     );
 
-    return result.rows[0];
+    const updatedDonation = result.rows[0];
+
+    // Wenn der Status auf 'delivered' gesetzt wurde und er vorher nicht 'delivered' war
+    if (status === 'delivered' && currentDonation.status !== 'delivered' && currentDonation.ngo_need_id) {
+        await db.query(
+            `UPDATE ngo_needs 
+             SET quantity_received = quantity_received + $1,
+                 status = CASE WHEN quantity_received + $1 >= quantity_needed THEN 'fulfilled' ELSE status END,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = $2`,
+            [currentDonation.quantity, currentDonation.ngo_need_id]
+        );
+    }
+
+    return updatedDonation;
 };
 
 const updateDonationByOwner = async (donationId, donorUserId, data) => {

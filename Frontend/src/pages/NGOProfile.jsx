@@ -36,7 +36,7 @@ const NGOProfile = () => {
       try {
         const [profileData, needsData, activitiesData] = await Promise.all([
           fetchMyProfile(),
-          fetchNeeds({ status: 'active' }),
+          fetchNeeds({ status: 'all' }),
           fetchMyActivities(10),
         ]);
 
@@ -91,7 +91,8 @@ const NGOProfile = () => {
 
   const missionText = profile.profileDescription || '';
 
-  const currentNeeds = ngoNeeds.slice(0, 3);
+  const activeNeeds = ngoNeeds.filter((need) => need.status === 'active');
+  const currentNeeds = activeNeeds.slice(0, 3);
 
   const formatRelativeTime = (createdAt) => {
     if (!createdAt) return '';
@@ -196,7 +197,7 @@ const NGOProfile = () => {
 
         <div className="bg-white rounded-xl border border-[#dce5df] p-4">
           <p className="text-xs uppercase tracking-wide text-[#6a7b72] font-semibold">Aktive Anfragen</p>
-          <p className="text-4xl font-bold text-[#173d2f] mt-1">{ngoNeeds.length}</p>
+          <p className="text-4xl font-bold text-[#173d2f] mt-1">{activeNeeds.length}</p>
           <div className="h-1.5 bg-[#e4ebe7] rounded-full mt-3 overflow-hidden">
             <div className="h-full bg-[#145539] rounded-full" style={{ width: `${Math.min(ngoNeeds.length * 10, 100)}%` }} />
           </div>
