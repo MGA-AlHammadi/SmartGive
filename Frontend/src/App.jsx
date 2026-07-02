@@ -9,6 +9,7 @@ import Landing from './pages/Landing'
 import NGOProfile from './pages/NGOProfile'
 import SpenderProfile from './pages/SpenderProfile'
 import EditAccount from './pages/EditAccount'
+import Messages from './pages/Messages'
 import Footer from './components/Footer'
 
 function App() {
@@ -50,6 +51,7 @@ function App() {
             <Route path="/spender-profile" element={<SpenderProfile />} />
             <Route path="/ngo-profile" element={<NGOProfile />} />
             <Route path="/account/edit" element={<EditAccount />} />
+            <Route path="/messages" element={<Messages />} />
           </Routes>
         </main>
       </div>

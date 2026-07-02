@@ -5,6 +5,7 @@ const path = require('node:path');
 const authRoutes = require('./routes/authRoutes');
 const needsRoutes = require('./routes/needsRoutes');
 const donationsRoutes = require('./routes/donationsRoutes');
+const messageRoutes = require('./routes/messageRoutes');
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/needs', needsRoutes);
 app.use('/api/donations', donationsRoutes);
+app.use('/api/messages', messageRoutes);
 
 // Test Route (kann später geschützt werden)
 app.get('/', (req, res) => {

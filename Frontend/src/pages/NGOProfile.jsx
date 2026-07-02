@@ -91,8 +91,9 @@ const NGOProfile = () => {
 
   const missionText = profile.profileDescription || '';
 
-  const activeNeeds = ngoNeeds.filter((need) => need.status === 'active');
-  const currentNeeds = activeNeeds.slice(0, 3);
+  const displayNeeds = ngoNeeds.filter((need) => need.status === 'active' || need.status === 'erledigt');
+  const currentNeeds = displayNeeds.slice(0, 3);
+  const activeNeedsCount = ngoNeeds.filter((need) => need.status === 'active').length;
 
   const formatRelativeTime = (createdAt) => {
     if (!createdAt) return '';
@@ -197,7 +198,7 @@ const NGOProfile = () => {
 
         <div className="bg-white rounded-xl border border-[#dce5df] p-4">
           <p className="text-xs uppercase tracking-wide text-[#6a7b72] font-semibold">Aktive Anfragen</p>
-          <p className="text-4xl font-bold text-[#173d2f] mt-1">{activeNeeds.length}</p>
+          <p className="text-4xl font-bold text-[#173d2f] mt-1">{activeNeedsCount}</p>
           <div className="h-1.5 bg-[#e4ebe7] rounded-full mt-3 overflow-hidden">
             <div className="h-full bg-[#145539] rounded-full" style={{ width: `${Math.min(ngoNeeds.length * 10, 100)}%` }} />
           </div>
@@ -237,7 +238,8 @@ const NGOProfile = () => {
                 const needed = Number(need.quantity_needed || 0);
                 const received = Number(need.quantity_received || 0);
                 const progress = needed > 0 ? Math.round((received / needed) * 100) : 0;
-                const urgent = progress < 35;
+                const isFulfilled = need.status === 'erledigt' || (needed > 0 && received >= needed);
+                const urgent = !isFulfilled && progress < 35;
 
                 return (
                   <article key={need.id} className="bg-white border border-[#dce5df] rounded-2xl p-3 space-y-3 shadow-sm">
@@ -251,6 +253,11 @@ const NGOProfile = () => {
                       {urgent && (
                         <span className="absolute top-2 left-2 px-3 py-1 rounded-full bg-red-600 text-white text-xs font-semibold">
                           Dringend
+                        </span>
+                      )}
+                      {isFulfilled && (
+                        <span className="absolute top-2 left-2 px-3 py-1 rounded-full bg-slate-600 text-white text-xs font-semibold">
+                          Erledigt
                         </span>
                       )}
                     </div>

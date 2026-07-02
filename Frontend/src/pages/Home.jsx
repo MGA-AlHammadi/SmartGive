@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Filter, RotateCcw, ChevronDown } from 'lucide-react';
+import { Filter, RotateCcw, ChevronDown, MessageSquare } from 'lucide-react';
 import {
   createDonation,
   createNeed,
@@ -141,7 +141,7 @@ const Home = () => {
   const loadNeeds = async () => {
     setLoadingNeeds(true);
     try {
-      const data = await fetchNeeds({ status: 'active' });
+      const data = await fetchNeeds();
       setNeeds(data.needs || []);
     } catch (err) {
       toast.error(err.message || 'Bedarfe konnten nicht geladen werden');
@@ -575,6 +575,15 @@ const Home = () => {
           const needed = Number(need.quantity_needed || 0);
           const received = Number(need.quantity_received || 0);
           const isUrgent = needed > 0 && received / needed < 0.4;
+          const isFulfilled = need.status === 'erledigt' || (needed > 0 && received >= needed);
+
+          let statusLabel = isUrgent ? 'Dringend' : 'Normal';
+          let statusColor = isUrgent ? 'bg-red-600' : 'bg-emerald-600';
+
+          if (isFulfilled) {
+            statusLabel = 'Erledigt';
+            statusColor = 'bg-slate-600';
+          }
 
           return (
             <article
@@ -592,8 +601,8 @@ const Home = () => {
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-slate-100 via-slate-50 to-emerald-50" />
                 )}
-                <span className={`absolute top-3 right-3 text-xs font-bold px-3 py-1 rounded-full text-white ${isUrgent ? 'bg-red-600' : 'bg-emerald-600'}`}>
-                  {isUrgent ? 'Dringend' : 'Normal'}
+                <span className={`absolute top-3 right-3 text-xs font-bold px-3 py-1 rounded-full text-white ${statusColor}`}>
+                  {statusLabel}
                 </span>
               </div>
 
@@ -624,9 +633,14 @@ const Home = () => {
                   {!isNgo && (
                     <button
                       onClick={() => openDonateForNeed(need)}
-                      className="w-full text-sm px-4 py-2 rounded-lg bg-brand hover:bg-brand-light text-white font-semibold transition-colors"
+                      disabled={isFulfilled}
+                      className={`w-full text-sm px-4 py-2 rounded-lg font-semibold transition-colors ${
+                        isFulfilled 
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                          : 'bg-brand hover:bg-brand-light text-white'
+                      }`}
                     >
-                      Jetzt spenden
+                      {isFulfilled ? 'Bedarf gedeckt' : 'Jetzt spenden'}
                     </button>
                   )}
                 </div>

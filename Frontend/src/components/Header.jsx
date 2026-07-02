@@ -129,11 +129,14 @@ const Header = () => {
 
         <div className="flex items-center gap-1 sm:gap-2">
           {/* Nachrichten Icon */}
-          <button className="p-2 text-gray-500 hover:text-brand hover:bg-gray-50 rounded-full transition-all relative group">
+          <Link 
+            to="/messages"
+            className="p-2 text-gray-500 hover:text-brand hover:bg-gray-50 rounded-full transition-all relative group"
+          >
             <MessageSquare size={20} />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-brand rounded-full border-2 border-white"></span>
             <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Nachrichten</span>
-          </button>
+          </Link>
 
           {/* Benachrichtigungen Icon */}
           <div className="relative" ref={notificationRef}>

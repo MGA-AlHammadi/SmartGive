@@ -52,8 +52,8 @@ const listNeeds = async (filters) => {
         values.push(status);
         conditions.push(`status = $${values.length}`);
     } else if (!status) {
-        values.push('active');
-        conditions.push(`status = $${values.length}`);
+        // Standardmäßig aktive und erledigte Bedarfe anzeigen
+        conditions.push(`status IN ('active', 'erledigt')`);
     }
 
     const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';

@@ -113,7 +113,7 @@ const updateDonationStatus = async (donationId, status, actingNgoUserId = null) 
         await db.query(
             `UPDATE ngo_needs 
              SET quantity_received = quantity_received + $1,
-                 status = CASE WHEN quantity_received + $1 >= quantity_needed THEN 'fulfilled' ELSE status END,
+                 status = CASE WHEN quantity_received + $1 >= quantity_needed THEN 'erledigt' ELSE status END,
                  updated_at = CURRENT_TIMESTAMP
              WHERE id = $2`,
             [currentDonation.quantity, currentDonation.ngo_need_id]

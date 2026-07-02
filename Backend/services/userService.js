@@ -72,6 +72,18 @@ const updateLastLogin = async (userId) => {
     await db.query('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1', [userId]);
 };
 
+const searchUsers = async (searchTerm) => {
+    const result = await db.query(
+        `SELECT id, username, first_name, last_name, company_name, is_company 
+         FROM users 
+         WHERE (username ILIKE $1 OR first_name ILIKE $1 OR last_name ILIKE $1 OR company_name ILIKE $1 OR email ILIKE $1)
+         ORDER BY company_name NULLS LAST, username ASC
+         LIMIT 20`,
+        [`%${searchTerm}%`]
+    );
+    return result.rows;
+};
+
 const createUser = async (userData) => {
     const {
         username,
@@ -204,5 +216,6 @@ module.exports = {
     getUserById,
     updateLastLogin,
     createUser,
-    updateUserProfile
+    updateUserProfile,
+    searchUsers
 };
