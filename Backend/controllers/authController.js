@@ -38,11 +38,11 @@ const login = async (req, res) => {
             return res.status(401).json({ message: 'Ungültiger Benutzername oder Passwort' });
         }
 
-        // JWT erstellen (Gültig für 1 Stunde)
+        // JWT erstellen (Gültigkeit auf 24h erhöht für stabileres Testen)
         const token = jwt.sign(
             { id: user.id, username: user.username },
             process.env.JWT_SECRET,
-            { expiresIn: '1h' }
+            { expiresIn: '24h' }
         );
         
         // Letzten Login aktualisieren über den Service
@@ -91,11 +91,11 @@ const register = async (req, res) => {
             isCompany
         });
 
-        // JWT erstellen für automatischen Login nach Registrierung
+        // JWT erstellen für automatischen Login nach Registrierung (24h)
         const token = jwt.sign(
             { id: newUser.id, username: newUser.username },
             process.env.JWT_SECRET,
-            { expiresIn: '1h' }
+            { expiresIn: '24h' }
         );
 
         res.status(201).json({ 

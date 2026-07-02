@@ -2,6 +2,7 @@ const donationService = require('../services/donationService');
 const needService = require('../services/needService');
 const userService = require('../services/userService');
 const activityService = require('../services/activityService');
+const reportService = require('../services/reportService');
 
 const mapFilesToUrls = (files = []) => files.slice(0, 5).map((file) => `/uploads/${file.filename}`);
 
@@ -102,6 +103,33 @@ const listReceivedDonations = async (req, res) => {
         console.error('Fehler beim Laden empfangener Spenden:', err);
         res.status(500).json({ message: 'Serverfehler' });
     }
+};
+
+const generateDonationReport = (req, res) => {
+    const donationId = req.params.id;
+    console.log(`[PDF] Request für Spende ${donationId} empfangen`);
+
+    donationService.getDonationFullDetails(donationId)
+        .then(donation => {
+            if (!donation) {
+                return res.status(404).json({ message: 'Spende nicht gefunden' });
+            }
+
+            const doc = reportService.generateDonationPDF(donation);
+            
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename=SmartGive_Spende_${donationId}.pdf`);
+
+            doc.pipe(res);
+            doc.end();
+            console.log(`[PDF] Stream gestartet für ${donationId}`);
+        })
+        .catch(err => {
+            console.error('[PDF] Fehler:', err);
+            if (!res.headersSent) {
+                res.status(500).json({ message: 'Serverfehler beim PDF' });
+            }
+        });
 };
 
 const updateDonationStatus = async (req, res) => {
@@ -227,6 +255,7 @@ module.exports = {
     createDonation,
     listMyDonations,
     listReceivedDonations,
+    generateDonationReport,
     updateDonationStatus,
     updateDonationByOwner,
     deleteDonationByOwner

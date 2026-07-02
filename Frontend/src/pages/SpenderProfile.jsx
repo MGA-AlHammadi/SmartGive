@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { BadgeCheck, CalendarDays, CheckCheck, Handshake, Mail, MapPin, Shirt } from 'lucide-react';
+import { BadgeCheck, CalendarDays, CheckCheck, FileText, Handshake, Mail, MapPin, Shirt } from 'lucide-react';
 import { fetchMyActivities, fetchMyProfile } from '../services/authService';
-import { fetchMyDonations } from '../services/marketplaceService';
+import { fetchMyDonations, downloadDonationReport } from '../services/marketplaceService';
+import { toast } from 'react-hot-toast';
 
 const SpenderProfile = () => {
   const navigate = useNavigate();
@@ -103,6 +104,16 @@ const SpenderProfile = () => {
 
   const levelLabel = donatedItems >= 25 ? 'Premium Spender' : 'Aktiver Spender';
   const profileDescription = profile.profileDescription || '';
+
+  const handleDownloadReport = async (donationId) => {
+    try {
+      await downloadDonationReport(donationId);
+      toast.success('Bericht heruntergeladen');
+    } catch (error) {
+      console.error('Download Fehler:', error);
+      toast.error('Bericht konnte nicht geladen werden');
+    }
+  };
 
   if (loading) {
     return (
@@ -216,6 +227,52 @@ const SpenderProfile = () => {
           <div className="inline-flex rounded-lg border border-[#2d6c51] bg-[#296649] px-4 py-2 text-sm font-semibold">
             {co2SavedKg}kg CO2 Ersparnis
           </div>
+        </article>
+
+        <article className="xl:col-span-3 rounded-2xl border border-[#dce5df] bg-white p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-3xl font-bold text-[#173d2f]">Meine Spenden</h2>
+          </div>
+
+          {myDonations.length === 0 ? (
+            <p className="text-[#8a9891] text-sm">Du hast noch keine Spenden getätigt.</p>
+          ) : (
+            <div className="space-y-4">
+              {myDonations.slice(0, 5).map((donation) => (
+                <div key={donation.id} className="flex items-center justify-between border-b border-[#f0f4f2] pb-4 last:border-0 last:pb-0">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-1 h-10 w-10 rounded-lg bg-[#f0f7f4] text-[#145539] flex items-center justify-center">
+                      <Shirt size={20} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-[#173d2f]">{donation.item_name}</p>
+                      <p className="text-xs text-[#5f6e66]">
+                        {donation.ngo_name || 'Allgemeine Spende'} • {new Date(donation.created_at).toLocaleDateString()}
+                      </p>
+                      <div className="mt-1">
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                          donation.status === 'delivered' ? 'bg-[#e7f5ee] text-[#1f6044]' : 
+                          donation.status === 'pending' ? 'bg-[#fffbeb] text-[#92400e]' : 
+                          'bg-[#f3f4f6] text-[#374151]'
+                        }`}>
+                          {donation.status}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={() => handleDownloadReport(donation.id)}
+                    className="flex items-center gap-1.5 text-xs font-semibold text-[#145539] hover:text-[#1d6a49] bg-[#eef5f1] px-3 py-2 rounded-lg transition-colors"
+                    title="Bericht herunterladen"
+                  >
+                    <FileText size={14} />
+                    <span>PDF</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </article>
 
         <article className="xl:col-span-3 rounded-2xl border border-[#dce5df] bg-white p-5">

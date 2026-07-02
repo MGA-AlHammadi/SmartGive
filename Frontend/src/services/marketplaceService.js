@@ -94,6 +94,32 @@ export const fetchReceivedDonations = async () => {
   return handleResponse(response);
 };
 
+export const downloadDonationReport = async (donationId) => {
+  const response = await fetch(`${API_BASE_URL}/donations/${donationId}/report`, {
+    headers: buildAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    // If response is not ok, it might be JSON with error message or just a failure
+    try {
+      const data = await response.json();
+      throw new Error(data.message || 'Download fehlgeschlagen');
+    } catch (e) {
+      throw new Error('Download fehlgeschlagen (PDF-Bericht)');
+    }
+  }
+
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `SmartGive_Spende_${donationId}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
+};
+
 export const updateDonationDecision = async (donationId, status) => {
   const response = await fetch(`${API_BASE_URL}/donations/${donationId}/status`, {
     method: 'PATCH',

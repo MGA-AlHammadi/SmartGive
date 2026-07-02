@@ -35,6 +35,23 @@ const getDonationById = async (donationId) => {
     return result.rows[0];
 };
 
+const getDonationFullDetails = async (donationId) => {
+    const result = await db.query(
+        `SELECT d.*, 
+                nn.title AS need_title, 
+                u.company_name AS ngo_name,
+                donor.first_name AS donor_first_name,
+                donor.last_name AS donor_last_name
+         FROM donations d
+         LEFT JOIN ngo_needs nn ON nn.id = d.ngo_need_id
+         LEFT JOIN users u ON u.id = COALESCE(d.ngo_user_id, nn.ngo_user_id)
+         JOIN users donor ON donor.id = d.donor_user_id
+         WHERE d.id = $1`,
+        [donationId]
+    );
+    return result.rows[0];
+};
+
 const listMyDonations = async (donorUserId) => {
     const result = await db.query(
         `SELECT d.*, nn.title AS need_title, u.company_name AS ngo_name
@@ -170,6 +187,7 @@ const deleteDonationByOwner = async (donationId, donorUserId) => {
 module.exports = {
     createDonation,
     getDonationById,
+    getDonationFullDetails,
     listMyDonations,
     listReceivedDonations,
     updateDonationStatus,

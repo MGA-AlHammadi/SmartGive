@@ -20,9 +20,15 @@ app.use('/api/needs', needsRoutes);
 app.use('/api/donations', donationsRoutes);
 app.use('/api/messages', messageRoutes);
 
-// Test Route (kann später geschützt werden)
+// Test-Route
 app.get('/', (req, res) => {
     res.send('SmartGive Backend API läuft erfolgreich!');
+});
+
+// Neuer Log-Middleware um jeden Request zu sehen
+app.use((req, res, next) => {
+    console.log(`[REQUEST] ${req.method} ${req.url}`);
+    next();
 });
 
 app.use((err, req, res, next) => {

@@ -14,6 +14,9 @@ const verifyToken = (req, res, next) => {
         req.user = decoded; // Setze decodierten Payload auf req.user
         next(); // Gehe zur nächsten Middleware/Route
     } catch (err) {
+        if (err.name === 'TokenExpiredError') {
+            return res.status(401).json({ message: 'Token abgelaufen, bitte neu einloggen' });
+        }
         console.error('Token-Verifizierung fehlgeschlagen:', err.message);
         return res.status(401).json({ message: 'Ungültiges Token' });
     }
