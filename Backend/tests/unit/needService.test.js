@@ -65,8 +65,8 @@ describe('Need Service Unit Tests', () => {
 
             expect(db.query).toHaveBeenCalledTimes(1);
             expect(db.query).toHaveBeenCalledWith(
-                expect.stringContaining('WHERE status = $1'), // status = 'active' sollte der Default-Filter sein
-                ['active']
+                expect.stringContaining("status IN ('active', 'erledigt')"),
+                []
             );
             expect(result).toEqual(mockNeeds);
         });
@@ -79,8 +79,8 @@ describe('Need Service Unit Tests', () => {
 
             expect(db.query).toHaveBeenCalledTimes(1);
             expect(db.query).toHaveBeenCalledWith(
-                expect.stringContaining('WHERE category = $1 AND status = $2'), 
-                ['Kleidung', 'active']
+                expect.stringContaining('category = $1'),
+                ['Kleidung']
             );
         });
     });
