@@ -8,7 +8,7 @@ import { loginUser } from '../services/authService';
 const Login = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: '',
     rememberMe: false
   });
@@ -16,9 +16,9 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('rememberedUser');
-    if (savedUser) {
-      setFormData(prev => ({ ...prev, username: savedUser, rememberMe: true }));
+    const savedEmail = localStorage.getItem('rememberedEmail');
+    if (savedEmail) {
+      setFormData(prev => ({ ...prev, email: savedEmail, rememberMe: true }));
     }
   }, []);
 
@@ -36,22 +36,26 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const data = await loginUser(formData.username, formData.password);
+      const data = await loginUser(formData.email, formData.password);
 
       // Token und User-Daten im Browser (Local Storage) speichern
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
 
       if (formData.rememberMe) {
-        localStorage.setItem('rememberedUser', formData.username);
+        localStorage.setItem('rememberedEmail', formData.email);
       } else {
-        localStorage.removeItem('rememberedUser');
+        localStorage.removeItem('rememberedEmail');
       }
 
       toast.success('Willkommen zurück!');
       
-      // Weiterleitung zur Homepage
-      navigate('/home');
+      // Weiterleitung: Admin -> /admin, Sonst -> /home
+      if (data.user.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/home');
+      }
     } catch (err) {
       setError(err.message);
       toast.error(err.message || 'Login fehlgeschlagen');
@@ -128,9 +132,9 @@ const Login = () => {
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                 <input
-                  type="text"
-                  name="username"
-                  value={formData.username}
+                  type="email"
+                  name="email"
+                  value={formData.email}
                   onChange={handleChange}
                   placeholder="name@beispiel.de"
                   className="w-full bg-[#f4ece3]/40 text-gray-800 rounded-lg pl-9 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand/50 text-sm"

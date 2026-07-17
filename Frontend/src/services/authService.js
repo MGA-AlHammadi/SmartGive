@@ -13,11 +13,11 @@ const buildAuthHeaders = () => {
   };
 };
 
-export const loginUser = async (username, password) => {
+export const loginUser = async (email, password) => {
   const response = await fetch(`${API_URL}/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password })
+    body: JSON.stringify({ email, password })
   });
 
   const data = await response.json();
@@ -75,6 +75,18 @@ export const updateMyProfile = async (profileData) => {
   const data = await response.json();
   if (!response.ok) {
     throw new Error(data.message || 'Profil konnte nicht aktualisiert werden');
+  }
+  return data;
+};
+
+export const fetchUserProfile = async (userId) => {
+  const response = await fetch(`${API_URL}/profile/${userId}`, {
+    headers: buildAuthHeaders(),
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || 'Profil konnte nicht geladen werden');
   }
   return data;
 };

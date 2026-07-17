@@ -1154,7 +1154,17 @@ const Home = () => {
                     <p>Erhalten: <span className="font-semibold">{selectedListing.quantity_received || 0}</span></p>
                     <p>Größe: <span className="font-semibold">{selectedListing.size || '-'}</span></p>
                     <p>Gender: <span className="font-semibold">{selectedListing.gender || '-'}</span></p>
-                    <p className="col-span-2">NGO: <span className="font-semibold">{selectedListing.ngo_name || 'NGO'}</span></p>
+                    <p className="col-span-2">
+                      NGO: <button 
+                        onClick={() => {
+                          closeListingDetails();
+                          navigate(`/ngo-profile/${selectedListing.ngo_user_id}`);
+                        }}
+                        className="font-semibold text-brand hover:underline text-left"
+                      >
+                        {selectedListing.ngo_name || 'NGO'}
+                      </button>
+                    </p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-2 text-sm text-gray-700 bg-slate-50 border border-slate-100 rounded-xl p-3">

@@ -6,6 +6,7 @@ const authRoutes = require('./routes/authRoutes');
 const needsRoutes = require('./routes/needsRoutes');
 const donationsRoutes = require('./routes/donationsRoutes');
 const messageRoutes = require('./routes/messageRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/needs', needsRoutes);
 app.use('/api/donations', donationsRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Test-Route
 app.get('/', (req, res) => {

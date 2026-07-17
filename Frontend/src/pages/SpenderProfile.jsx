@@ -165,13 +165,20 @@ const SpenderProfile = () => {
               )}
             </div>
 
-            <div className="lg:w-52">
+            <div className="lg:w-52 space-y-2">
               <button
                 type="button"
                 onClick={() => navigate('/account/edit')}
                 className="w-full rounded-xl bg-[#145539] hover:bg-[#1d6a49] text-white font-semibold py-3 px-4 transition-colors"
               >
                 Profil bearbeiten
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/messages')}
+                className="w-full rounded-xl bg-white border border-[#d7e2da] text-[#315244] font-semibold py-3 px-4 hover:bg-[#f3f8f5] transition-colors"
+              >
+                Kontakt aufnehmen
               </button>
             </div>
           </div>

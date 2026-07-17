@@ -2,6 +2,7 @@ import React from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import Header from './components/Header'
+import ProtectedAdminRoute from './components/ProtectedAdminRoute'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Home from './pages/Home'
@@ -10,11 +11,12 @@ import NGOProfile from './pages/NGOProfile'
 import SpenderProfile from './pages/SpenderProfile'
 import EditAccount from './pages/EditAccount'
 import Messages from './pages/Messages'
+import Admin from './pages/Admin'
 import Footer from './components/Footer'
 
 function App() {
   const location = useLocation();
-  const hideHeaderFooter = ['/login', '/register'].includes(location.pathname);
+  const hideHeaderFooter = ['/login', '/register', '/admin'].includes(location.pathname);
 
   return (
     <div className="h-screen bg-[#F7F6F2] grid grid-rows-[1fr_auto] overflow-hidden">
@@ -50,8 +52,17 @@ function App() {
             <Route path="/home" element={<Home />} />
             <Route path="/spender-profile" element={<SpenderProfile />} />
             <Route path="/ngo-profile" element={<NGOProfile />} />
+            <Route path="/ngo-profile/:userId" element={<NGOProfile />} />
             <Route path="/account/edit" element={<EditAccount />} />
             <Route path="/messages" element={<Messages />} />
+            <Route 
+              path="/admin" 
+              element={
+                <ProtectedAdminRoute>
+                  <Admin />
+                </ProtectedAdminRoute>
+              } 
+            />
           </Routes>
         </main>
       </div>

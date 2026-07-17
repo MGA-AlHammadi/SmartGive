@@ -17,35 +17,38 @@ const mapUserToResponse = (user) => ({
     profileDescription: user.profileDescription || user.profile_description || null,
     profilePicture: user.profilePicture || user.profile_picture || null,
     createdAt: user.created_at || null,
-    isCompany: user.isCompany ?? user.is_company
+    isCompany: user.isCompany ?? user.is_company,
+    role: user.role || 'user',
+    isVerified: user.is_verified || false,
+    isBanned: user.is_banned || false
 });
 
 const login = async (req, res) => {
-    const { username, password } = req.body;
+    const { email, password } = req.body;
 
     try {
-        // Prüfe, ob der Benutzer existiert über den Service
-        const user = await userService.getUserByUsername(username);
+        // Check if user exists by email
+        const user = await userService.getUserByEmail(email);
         
         if (!user) {
-            return res.status(401).json({ message: 'Ungültiger Benutzername oder Passwort' });
+            return res.status(401).json({ message: 'Ungültige E-Mail oder Passwort' });
         }
 
-        // Passwort abgleichen
+        // Compare password
         const isMatch = await bcrypt.compare(password, user.password_hash);
         
         if (!isMatch) {
-            return res.status(401).json({ message: 'Ungültiger Benutzername oder Passwort' });
+            return res.status(401).json({ message: 'Ungültige E-Mail oder Passwort' });
         }
 
-        // JWT erstellen (Gültigkeit auf 24h erhöht für stabileres Testen)
+        // Create JWT (extended validity to 24h for stable testing)
         const token = jwt.sign(
-            { id: user.id, username: user.username },
+            { id: user.id, username: user.username, role: user.role || 'user' },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
         
-        // Letzten Login aktualisieren über den Service
+        // Update last login
         await userService.updateLastLogin(user.id);
 
         res.json({
@@ -93,7 +96,7 @@ const register = async (req, res) => {
 
         // JWT erstellen für automatischen Login nach Registrierung (24h)
         const token = jwt.sign(
-            { id: newUser.id, username: newUser.username },
+            { id: newUser.id, username: newUser.username, role: newUser.role || 'user' },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
@@ -120,6 +123,22 @@ const getMe = async (req, res) => {
         res.json({ user: mapUserToResponse(user) });
     } catch (err) {
         console.error('Fehler beim Laden des Profils:', err);
+        res.status(500).json({ message: 'Serverfehler' });
+    }
+};
+
+const getUserProfile = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const user = await userService.getUserById(userId);
+
+        if (!user) {
+            return res.status(404).json({ message: 'Benutzer nicht gefunden' });
+        }
+
+        res.json({ user: mapUserToResponse(user) });
+    } catch (err) {
+        console.error('Fehler beim Laden des öffentlichen Profils:', err);
         res.status(500).json({ message: 'Serverfehler' });
     }
 };
@@ -183,4 +202,4 @@ const listMyActivities = async (req, res) => {
     }
 };
 
-module.exports = { login, register, getMe, updateMe, listMyActivities };
+module.exports = { login, register, getMe, updateMe, listMyActivities, getUserProfile };

@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Mail, MapPin, Phone, ShieldCheck } from 'lucide-react';
 import { fetchNeeds } from '../services/marketplaceService';
-import { fetchMyActivities, fetchMyProfile } from '../services/authService';
+import { fetchMyActivities, fetchMyProfile, fetchUserProfile } from '../services/authService';
 
 const NGOProfile = () => {
+  const { userId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const token = localStorage.getItem('token');
@@ -13,17 +14,20 @@ const NGOProfile = () => {
   const [loading, setLoading] = useState(true);
   const [ngoNeeds, setNgoNeeds] = useState([]);
   const [activities, setActivities] = useState([]);
-  const [profile, setProfile] = useState(user);
+  const [profile, setProfile] = useState(userId ? {} : user);
 
   const IMAGE_BASE_URL = import.meta.env.VITE_API_ORIGIN || 'http://localhost:5000';
 
   useEffect(() => {
-    const latestProfile = location.state?.updatedProfile;
-    if (latestProfile) {
-      setProfile(latestProfile);
-      localStorage.setItem('user', JSON.stringify(latestProfile));
+    // Falls wir unser eigenes Profil aktualisiert haben
+    if (!userId) {
+      const latestProfile = location.state?.updatedProfile;
+      if (latestProfile) {
+        setProfile(latestProfile);
+        localStorage.setItem('user', JSON.stringify(latestProfile));
+      }
     }
-  }, [location.state]);
+  }, [location.state, userId]);
 
   useEffect(() => {
     if (!token) {
@@ -35,14 +39,18 @@ const NGOProfile = () => {
       setLoading(true);
       try {
         const [profileData, needsData, activitiesData] = await Promise.all([
-          fetchMyProfile(),
+          userId ? fetchUserProfile(userId) : fetchMyProfile(),
           fetchNeeds({ status: 'all' }),
-          fetchMyActivities(10),
+          userId ? Promise.resolve({ activities: [] }) : fetchMyActivities(10),
         ]);
 
         const currentProfile = profileData.user || {};
         setProfile(currentProfile);
-        localStorage.setItem('user', JSON.stringify(currentProfile));
+        
+        // Nur im LocalStorage speichern, wenn es das eigene Profil ist
+        if (!userId) {
+          localStorage.setItem('user', JSON.stringify(currentProfile));
+        }
 
         const allNeeds = needsData.needs || [];
         const ownNeeds = allNeeds.filter((need) => Number(need.ngo_user_id) === Number(currentProfile.id));
@@ -58,7 +66,7 @@ const NGOProfile = () => {
     };
 
     loadNgoNeeds();
-  }, [navigate, token, user.id, location.state?.refreshedAt]);
+  }, [navigate, token, user.id, userId, location.state?.refreshedAt]);
 
   const normalizeImageUrls = (value) => {
     if (Array.isArray(value)) return value;
@@ -131,9 +139,11 @@ const NGOProfile = () => {
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-3">
                 <h1 className="text-4xl sm:text-5xl font-bold text-[#173d2f] leading-tight">{profileName}</h1>
-                <span className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold px-3 py-1 rounded-full bg-[#eef5f1] text-[#1f6044]">
-                  <ShieldCheck size={14} /> Verifizierte Organisation
-                </span>
+                {profile.isVerified && (
+                  <span className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold px-3 py-1 rounded-full bg-[#eef5f1] text-[#1f6044]">
+                    <ShieldCheck size={14} /> Verifizierte Organisation
+                  </span>
+                )}
               </div>
               <p className="text-[#5f6e66] mt-2 text-sm sm:text-base">
                 Seit Jahren unterstützen wir bedürftige Menschen mit gezielten Kleider- und Sachspenden.
@@ -164,22 +174,27 @@ const NGOProfile = () => {
         </div>
 
         <div className="space-y-3">
+          {!userId && (
+            <>
+              <button
+                type="button"
+                onClick={() => navigate('/home?create=need')}
+                className="w-full rounded-xl bg-[#145539] hover:bg-[#1d6a49] text-white font-semibold py-3 px-4 transition-colors"
+              >
+                Jetzt unterstützen
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/account/edit')}
+                className="w-full rounded-xl bg-white border border-[#d7e2da] text-[#315244] font-semibold py-3 px-4 hover:bg-[#f3f8f5] transition-colors"
+              >
+                Konto bearbeiten
+              </button>
+            </>
+          )}
           <button
             type="button"
-            onClick={() => navigate('/home?create=need')}
-            className="w-full rounded-xl bg-[#145539] hover:bg-[#1d6a49] text-white font-semibold py-3 px-4 transition-colors"
-          >
-            Jetzt unterstützen
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate('/account/edit')}
-            className="w-full rounded-xl bg-white border border-[#d7e2da] text-[#315244] font-semibold py-3 px-4 hover:bg-[#f3f8f5] transition-colors"
-          >
-            Konto bearbeiten
-          </button>
-          <button
-            type="button"
+            onClick={() => navigate('/messages')}
             className="w-full rounded-xl bg-white border border-[#d7e2da] text-[#315244] font-semibold py-3 px-4 hover:bg-[#f3f8f5] transition-colors"
           >
             Kontakt aufnehmen

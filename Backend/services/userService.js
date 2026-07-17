@@ -21,6 +21,9 @@ const buildUserSelectClause = async () => {
     const hasPhone = await hasUsersColumn('phone');
     const hasProfileDescription = await hasUsersColumn('profile_description');
     const hasProfilePicture = await hasUsersColumn('profile_picture');
+    const hasRole = await hasUsersColumn('role');
+    const hasIsVerified = await hasUsersColumn('is_verified');
+    const hasIsBanned = await hasUsersColumn('is_banned');
 
     return `
         id,
@@ -42,7 +45,10 @@ const buildUserSelectClause = async () => {
         ${hasCompanyCity ? 'company_city' : 'NULL'} AS "companyCity",
         ${hasPhone ? 'phone' : 'NULL'} AS phone,
         ${hasProfileDescription ? 'profile_description' : 'NULL'} AS "profileDescription",
-        ${hasProfilePicture ? 'profile_picture' : 'NULL'} AS "profilePicture"
+        ${hasProfilePicture ? 'profile_picture' : 'NULL'} AS "profilePicture",
+        ${hasRole ? 'role' : "'user'"} AS role,
+        ${hasIsVerified ? 'is_verified' : 'false'} AS is_verified,
+        ${hasIsBanned ? 'is_banned' : 'false'} AS is_banned
     `;
 };
 
@@ -53,6 +59,17 @@ const getUserByUsername = async (username) => {
          FROM users
          WHERE username = $1`,
         [username]
+    );
+    return result.rows[0]; // Returns the user object if found, otherwise undefined
+};
+
+const getUserByEmail = async (email) => {
+    const selectClause = await buildUserSelectClause();
+    const result = await db.query(
+        `SELECT ${selectClause}
+         FROM users
+         WHERE email = $1`,
+        [email]
     );
     return result.rows[0]; // Returns the user object if found, otherwise undefined
 };
@@ -213,6 +230,7 @@ const updateUserProfile = async (userId, userData) => {
 
 module.exports = {
     getUserByUsername,
+    getUserByEmail,
     getUserById,
     updateLastLogin,
     createUser,
