@@ -8,7 +8,6 @@
     "dev": "nodemon server.js",
     "start": "node server.js",
     "migrate": "node scripts/runMigrations.js",
-    "migrate:profile": "node scripts/migrateUserProfileSchema.js",
     "create:admin": "node scripts/createAdmin.js"
   },
   "keywords": [],
