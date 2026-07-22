@@ -11,7 +11,7 @@ const buildAuthHeaders = () => {
   };
 };
 
-// Dashboard
+// Dashboard-Statistiken abrufen
 export const getDashboardStats = async () => {
   const response = await fetch(`${API_URL}/dashboard/stats`, {
     headers: buildAuthHeaders(),
@@ -23,7 +23,7 @@ export const getDashboardStats = async () => {
   return data;
 };
 
-// User Management
+// Benutzerverwaltung
 export const listAllUsers = async (page = 1, limit = 10, search = '', role = '', isBanned = '') => {
   const params = new URLSearchParams({ page, limit, search, role, isBanned });
   const response = await fetch(`${API_URL}/users?${params}`, {
@@ -86,7 +86,7 @@ export const deleteUser = async (userId) => {
   return data;
 };
 
-// NGO Verification
+// NGO-Verifizierung
 export const listPendingNgos = async (page = 1, limit = 10, search = '') => {
   const params = new URLSearchParams({ page, limit, search });
   const response = await fetch(`${API_URL}/ngos/pending?${params}`, {
@@ -136,7 +136,7 @@ export const rejectNgo = async (ngoId, reason) => {
   return data;
 };
 
-// Content Moderation
+// Inhaltsmoderation
 export const listReports = async (page = 1, limit = 10, status = 'pending') => {
   const params = new URLSearchParams({ page, limit, status });
   const response = await fetch(`${API_URL}/reports?${params}`, {
@@ -162,7 +162,7 @@ export const reviewReport = async (reportId, decision, notes) => {
   return data;
 };
 
-// Admin Logs
+// Admin-Protokolle (Logs)
 export const getAdminLogs = async (page = 1, limit = 20, adminId = '') => {
   const params = new URLSearchParams({ page, limit, adminId });
   const response = await fetch(`${API_URL}/logs?${params}`, {

@@ -16,7 +16,7 @@ const Header = () => {
   useEffect(() => {
     if (token) {
       loadActivities();
-      // Poll for new notifications every 30 seconds
+      // Neue Benachrichtigungen alle 30 Sekunden abrufen
       const interval = setInterval(loadActivities, 30000);
       return () => clearInterval(interval);
     }
@@ -37,7 +37,7 @@ const Header = () => {
       const data = await fetchMyActivities(8);
       setActivities(data.activities || []);
     } catch (err) {
-      console.error('Failed to load notifications:', err);
+      console.error('Fehler beim Laden der Benachrichtigungen:', err);
     }
   };
 

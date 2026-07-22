@@ -1,7 +1,7 @@
 const db = require('../config/db');
 const userService = require('../services/userService');
 
-// Helper function to log admin actions
+// Hilfsfunktion zum Protokollieren von Admin-Aktionen
 const logAdminAction = async (adminId, action, targetType, targetId, description) => {
     try {
         await db.query(
@@ -13,38 +13,38 @@ const logAdminAction = async (adminId, action, targetType, targetId, description
     }
 };
 
-// === DASHBOARD STATISTICS ===
+// === DASHBOARD-STATISTIKEN ===
 const getDashboardStats = async (req, res) => {
     try {
         const adminId = req.user.id;
 
-        // Total users
+        // Gesamtzahl der Benutzer
         const usersCount = await db.query('SELECT COUNT(*) as count FROM users WHERE role = $1', ['user']);
         
-        // Total NGOs
+        // Gesamtzahl der NGOs
         const ngosCount = await db.query('SELECT COUNT(*) as count FROM users WHERE is_company = true AND role = $1', ['user']);
         
-        // Verified NGOs
+        // Verifizierte NGOs
         const verifiedNgos = await db.query(
             'SELECT COUNT(*) as count FROM users WHERE is_company = true AND is_verified = true AND role = $1',
             ['user']
         );
         
-        // Total donations
+        // Gesamtzahl der Spenden
         const donationsCount = await db.query(
             'SELECT COUNT(*) as count, SUM(CAST(amount AS FLOAT)) as total FROM donations'
         );
         
-        // Pending NGO verifications
+        // Ausstehende NGO-Verifizierungen
         const pendingNgos = await db.query(
             'SELECT COUNT(*) as count FROM users WHERE is_company = true AND is_verified = false AND is_banned = false AND role = $1',
             ['user']
         );
 
-        // Banned users
+        // Gesperrte Benutzer
         const bannedUsers = await db.query('SELECT COUNT(*) as count FROM users WHERE is_banned = true');
 
-        // Pending reports
+        // Ausstehende Meldungen
         const pendingReports = await db.query(
             'SELECT COUNT(*) as count FROM content_reports WHERE status = $1',
             ['pending']
@@ -66,7 +66,7 @@ const getDashboardStats = async (req, res) => {
     }
 };
 
-// === USER MANAGEMENT ===
+// === BENUTZERVERWALTUNG ===
 const listAllUsers = async (req, res) => {
     try {
         const { page = 1, limit = 10, search = '', role = '', isBanned = '' } = req.query;
@@ -130,7 +130,7 @@ const updateUserRole = async (req, res) => {
             return res.status(400).json({ message: 'Ungültige Rolle' });
         }
 
-        // Prevent self-demotion
+        // Selbst-Herabstufung verhindern
         if (parseInt(userId) === adminId && role === 'user') {
             return res.status(403).json({ message: 'Sie können sich selbst nicht herabstufen' });
         }
@@ -195,14 +195,14 @@ const deleteUser = async (req, res) => {
             return res.status(403).json({ message: 'Sie können Ihr eigenes Konto nicht löschen' });
         }
 
-        // Get user info before deleting
+        // Benutzerinformationen vor dem Löschen abrufen
         const user = await db.query('SELECT username, email FROM users WHERE id = $1', [userId]);
-        
+
         if (user.rows.length === 0) {
             return res.status(404).json({ message: 'Benutzer nicht gefunden' });
         }
 
-        // Delete user
+        // Benutzer löschen
         await db.query('DELETE FROM users WHERE id = $1', [userId]);
 
         await logAdminAction(adminId, 'DELETE_USER', 'user', userId, `Benutzer gelöscht: ${user.rows[0].username}`);
@@ -214,7 +214,7 @@ const deleteUser = async (req, res) => {
     }
 };
 
-// === NGO VERIFICATION ===
+// === NGO-VERIFIZIERUNG ===
 const listPendingNgos = async (req, res) => {
     try {
         const { page = 1, limit = 10, search = '' } = req.query;
@@ -337,7 +337,7 @@ const getVerifiedNgos = async (req, res) => {
     }
 };
 
-// === CONTENT MODERATION ===
+// === INHALTSMODERATION ===
 const listReports = async (req, res) => {
     try {
         const { page = 1, limit = 10, status = 'pending' } = req.query;
@@ -394,7 +394,7 @@ const reviewReport = async (req, res) => {
     }
 };
 
-// === ADMIN LOGS ===
+// === ADMIN-PROTOKOLLE ===
 const getAdminLogs = async (req, res) => {
     try {
         const { page = 1, limit = 20, adminId = '' } = req.query;

@@ -1,7 +1,7 @@
 const db = require('../config/db');
 
 /**
- * Send a message from one user to another
+ * Nachricht von einem Benutzer an einen anderen senden
  */
 const sendMessage = async (senderId, receiverId, content) => {
     const result = await db.query(
@@ -12,7 +12,7 @@ const sendMessage = async (senderId, receiverId, content) => {
 };
 
 /**
- * Get message history between two users
+ * Nachrichtenverlauf zwischen zwei Benutzern abrufen
  */
 const getMessagesBetweenUsers = async (user1Id, user2Id) => {
     const result = await db.query(
@@ -31,8 +31,8 @@ const getMessagesBetweenUsers = async (user1Id, user2Id) => {
 };
 
 /**
- * Get all conversations for a user
- * Returns the latest message and the other participant for each conversation
+ * Alle Konversationen eines Benutzers abrufen
+ * Gibt die letzte Nachricht und den anderen Teilnehmer für jede Konversation zurück
  */
 const getUserConversations = async (userId) => {
     const result = await db.query(
@@ -63,7 +63,7 @@ const getUserConversations = async (userId) => {
 };
 
 /**
- * Mark messages as read
+ * Nachrichten als gelesen markieren
  */
 const markAsRead = async (senderId, receiverId) => {
     await db.query(

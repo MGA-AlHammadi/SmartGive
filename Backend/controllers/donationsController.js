@@ -163,14 +163,14 @@ const updateDonationStatus = async (req, res) => {
 
         const updatedDonation = await donationService.updateDonationStatus(req.params.id, status, req.user.id);
 
-        // Benachrichtigung für die NGO (Aktionär)
+        // Benachrichtigung für die NGO (Akteur)
         await activityService.createActivity({
             userId: req.user.id,
             title: 'Spendenstatus geändert',
             details: `Du hast die Spende "${donation.item_name}" als "${status}" markiert.`
         });
 
-        // Benachrichtigung für den Spenders (Besitzer der Spende)
+        // Benachrichtigung für den Spender (Besitzer der Spende)
         await activityService.createActivity({
             userId: donation.donor_user_id,
             title: status === 'accepted' ? 'Spende angenommen!' 

@@ -1,12 +1,12 @@
--- Admin Panel Test & Demo Script
--- Run this AFTER migration 008 has been applied
+-- Admin Panel Test & Demo Skript
+-- Ausführung NACHDEM Migration 008 angewendet wurde
 
--- 1. CREATE TEST ADMIN USER
--- (If you don't already have one)
+-- 1. TEST-ADMIN-BENUTZER ERSTELLEN
+-- (Falls noch keiner vorhanden ist)
 INSERT INTO users (username, password_hash, first_name, last_name, email, is_company, role)
 VALUES (
   'admin_test',
-  '$2a$10$...',  -- bcrypt hash for password 'password123'
+  '$2a$10$...',  -- bcrypt Hash für Passwort 'password123'
   'Test',
   'Admin',
   'admin@smartgive.de',
@@ -15,84 +15,84 @@ VALUES (
 )
 ON CONFLICT (email) DO UPDATE SET role = 'admin';
 
--- 2. VERIFY ADMIN USER WAS CREATED
+-- 2. VERIFIZIEREN, DASS DER ADMIN-BENUTZER ERSTELLT WURDE
 SELECT id, username, email, role, created_at FROM users WHERE role = 'admin';
 
--- 3. CHECK ADMIN-SPECIFIC COLUMNS
+-- 3. ADMIN-SPEZIFISCHE SPALTEN ÜBERPRÜFEN
 SELECT id, username, role, is_verified, is_banned, ban_reason FROM users LIMIT 5;
 
--- 4. TEST ADMIN LOGS TABLE
+-- 4. ADMIN-PROTOKOLLTABELLE TESTEN (admin_logs)
 SELECT * FROM admin_logs LIMIT 5;
 
--- 5. TEST CONTENT REPORTS TABLE
+-- 5. CONTENT-MELDUNGSTABELLE TESTEN (content_reports)
 SELECT * FROM content_reports LIMIT 5;
 
--- 6. PROMOTE EXISTING USER TO ADMIN
--- Replace 2 with actual user ID
+-- 6. EXISTIERENDEN BENUTZER ZUM ADMIN BEFÖRDERN
+-- Ersetzen Sie die 2 durch die tatsächliche Benutzer-ID
 UPDATE users SET role = 'admin' WHERE id = 2;
 
--- 7. DEMOTE ADMIN BACK TO USER
--- Replace 2 with actual user ID
+-- 7. ADMIN ZURÜCK ZUM BENUTZER HERABSTUFEN
+-- Ersetzen Sie die 2 durch die tatsächliche Benutzer-ID
 UPDATE users SET role = 'user' WHERE id = 2;
 
--- 8. BAN A USER
--- Replace 3 with actual user ID
+-- 8. EINEN BENUTZER SPERREN
+-- Ersetzen Sie die 3 durch die tatsächliche Benutzer-ID
 UPDATE users 
-SET is_banned = true, ban_reason = 'Test: Spam activity'
+SET is_banned = true, ban_reason = 'Test: Spam-Aktivität'
 WHERE id = 3;
 
--- 9. UNBAN A USER
+-- 9. EINEN BENUTZER ENTSPERREN
 UPDATE users 
 SET is_banned = false, ban_reason = NULL
 WHERE id = 3;
 
--- 10. VERIFY AN NGO
--- Replace 4 with actual NGO user ID (where is_company = true)
+-- 10. EINE NGO VERIFIZIEREN
+-- Ersetzen Sie die 4 durch die tatsächliche NGO-Benutzer-ID (is_company muss true sein)
 UPDATE users 
 SET is_verified = true
 WHERE id = 4 AND is_company = true;
 
--- 11. VIEW UNVERIFIED NGOs (PENDING)
+-- 11. AUSSTEHENDE NGOs ANZEIGEN (WARTEND)
 SELECT id, username, company_name, email, created_at
 FROM users
 WHERE is_company = true AND is_verified = false AND is_banned = false
 ORDER BY created_at ASC;
 
--- 12. VIEW VERIFIED NGOs
+-- 12. VERIFIZIERTE NGOs ANZEIGEN
 SELECT id, username, company_name, email, created_at
 FROM users
 WHERE is_company = true AND is_verified = true
 ORDER BY created_at ASC;
 
--- 13. MOCK AN ADMIN ACTION IN LOGS
+-- 13. EINE ADMIN-AKTION IM PROTOKOLL SIMULIEREN
 INSERT INTO admin_logs (admin_id, action, target_type, target_id, description)
 VALUES (
-  1,  -- Replace with actual admin ID
+  1,  -- Durch tatsächliche Admin-ID ersetzen
   'TEST_ACTION',
   'user',
-  2,  -- Replace with actual target ID
-  'This is a test admin action'
+  2,  -- Durch tatsächliche Ziel-ID ersetzen
+  'Dies ist eine Test-Admin-Aktion'
 );
 
--- 14. VIEW ADMIN LOGS
+-- 14. ADMIN-PROTOKOLLE ANZEIGEN
 SELECT al.id, u.username as admin_name, al.action, al.target_type, al.description, al.created_at
 FROM admin_logs al
 JOIN users u ON al.admin_id = u.id
 ORDER BY al.created_at DESC
 LIMIT 10;
 
--- 15. MOCK A CONTENT REPORT
+-- 15. EINE CONTENT-MELDUNG SIMULIEREN
 INSERT INTO content_reports (reporter_id, content_type, content_id, reason, description, status)
 VALUES (
-  2,  -- Replace with actual reporter ID
+  2,  -- Durch tatsächliche Melder-ID ersetzen
   'donation',
-  1,  -- Replace with actual content ID
-  'Spam Content',
-  'This content appears to be spam',
+  1,  -- Durch tatsächliche Inhalts-ID ersetzen
+  'Spam-Inhalt',
+  'Dieser Inhalt scheint Spam zu sein',
   'pending'
 );
 
--- 16. VIEW PENDING REPORTS
+-- 16. AUSSTEHENDE MELDUNGEN ANZEIGEN
 SELECT id, reporter_id, content_type, reason, status, created_at
 FROM content_reports
 WHERE status = 'pending'

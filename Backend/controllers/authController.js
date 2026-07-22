@@ -27,28 +27,28 @@ const login = async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        // Check if user exists by email
+        // Überprüfen, ob der Benutzer per E-Mail existiert
         const user = await userService.getUserByEmail(email);
         
         if (!user) {
             return res.status(401).json({ message: 'Ungültige E-Mail oder Passwort' });
         }
 
-        // Compare password
+        // Passwort vergleichen
         const isMatch = await bcrypt.compare(password, user.password_hash);
         
         if (!isMatch) {
             return res.status(401).json({ message: 'Ungültige E-Mail oder Passwort' });
         }
 
-        // Create JWT (extended validity to 24h for stable testing)
+        // JWT erstellen (Gültigkeit auf 24h verlängert für stabiles Testen)
         const token = jwt.sign(
             { id: user.id, username: user.username, role: user.role || 'user' },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
         
-        // Update last login
+        // Letzten Login aktualisieren
         await userService.updateLastLogin(user.id);
 
         res.json({

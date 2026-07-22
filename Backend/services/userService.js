@@ -60,7 +60,7 @@ const getUserByUsername = async (username) => {
          WHERE username = $1`,
         [username]
     );
-    return result.rows[0]; // Returns the user object if found, otherwise undefined
+    return result.rows[0]; // Gibt das Benutzerobjekt zurück, falls gefunden, ansonsten undefined
 };
 
 const getUserByEmail = async (email) => {
@@ -71,7 +71,7 @@ const getUserByEmail = async (email) => {
          WHERE email = $1`,
         [email]
     );
-    return result.rows[0]; // Returns the user object if found, otherwise undefined
+    return result.rows[0]; // Gibt das Benutzerobjekt zurück, falls gefunden, ansonsten undefined
 };
 
 const getUserById = async (userId) => {

@@ -1,10 +1,10 @@
--- Add admin role and status columns to users table
+-- Admin-Rolle und Status-Spalten zur Tabelle 'users' hinzufügen
 ALTER TABLE users ADD COLUMN role VARCHAR(20) DEFAULT 'user' CHECK (role IN ('user', 'admin'));
 ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT FALSE;
 ALTER TABLE users ADD COLUMN is_banned BOOLEAN DEFAULT FALSE;
 ALTER TABLE users ADD COLUMN ban_reason VARCHAR(500);
 
--- Create admin_logs table for tracking admin actions
+-- Tabelle 'admin_logs' erstellen, um Admin-Aktionen zu protokollieren
 CREATE TABLE admin_logs (
     id SERIAL PRIMARY KEY,
     admin_id INT NOT NULL,
@@ -16,7 +16,7 @@ CREATE TABLE admin_logs (
     FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Create content_reports table for moderation
+-- Tabelle 'content_reports' für die Moderation erstellen
 CREATE TABLE content_reports (
     id SERIAL PRIMARY KEY,
     reporter_id INT NOT NULL,

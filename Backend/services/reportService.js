@@ -8,13 +8,13 @@ const PDFDocument = require('pdfkit');
 const generateDonationPDF = (donation) => {
     const doc = new PDFDocument({ margin: 50, autoFirstPage: true });
 
-    // Handle errors on the stream
+    // Fehler auf dem Stream behandeln
     doc.on('error', (err) => {
         console.error('PDFKit error:', err);
     });
 
     try {
-        // Header
+        // Kopfzeile
         doc
             .fillColor('#444444')
             .fontSize(20)
@@ -30,7 +30,7 @@ const generateDonationPDF = (donation) => {
 
         doc.moveDown(2);
 
-        // Spender Information
+        // Spenderinformationen
         doc
             .fontSize(12)
             .fillColor('#000000')
@@ -40,7 +40,7 @@ const generateDonationPDF = (donation) => {
             .font('Helvetica')
             .moveDown(0.5);
 
-        // NGO Information
+        // NGO-Informationen
         doc
             .text('Begünstigte NGO:', { continued: true })
             .font('Helvetica-Bold')

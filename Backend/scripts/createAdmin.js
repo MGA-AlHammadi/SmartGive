@@ -10,23 +10,23 @@ const createAdmin = async () => {
         const firstName = 'Mohammd';
         const lastName = 'Admin';
 
-        console.log('\n🛡️  Creating admin user...\n');
-        console.log(`Username: ${username}`);
-        console.log(`Email: ${email}`);
+        console.log('\n🛡️  Admin-Benutzer wird erstellt...\n');
+        console.log(`Benutzername: ${username}`);
+        console.log(`E-Mail: ${email}`);
         console.log(`Name: ${firstName} ${lastName}\n`);
 
-        // Check if user already exists
+        // Überprüfen, ob der Benutzer bereits existiert
         const existingUser = await db.query(
             'SELECT id FROM users WHERE email = $1 OR username = $2',
             [email, username]
         );
 
         if (existingUser.rows.length > 0) {
-            console.log('⚠️  User already exists!\n');
-            console.log('Updating to admin role and password...\n');
+            console.log('⚠️  Benutzer existiert bereits!\n');
+            console.log('Aktualisierung auf Admin-Rolle und Passwort...\n');
             
-            // Hash the password
-            console.log('🔐 Hashing password...');
+            // Passwort hashen
+            console.log('🔐 Passwort wird gehasht...');
             const salt = await bcrypt.genSalt(10);
             const passwordHash = await bcrypt.hash(password, salt);
             
@@ -35,48 +35,48 @@ const createAdmin = async () => {
                 ['admin', passwordHash, email, username]
             );
 
-            console.log('✅ Admin user updated successfully!\n');
-            console.log('User Details:');
+            console.log('✅ Admin-Benutzer erfolgreich aktualisiert!\n');
+            console.log('Benutzerdetails:');
             console.log(`  ID: ${result.rows[0].id}`);
-            console.log(`  Username: ${result.rows[0].username}`);
-            console.log(`  Email: ${result.rows[0].email}`);
-            console.log(`  Role: ${result.rows[0].role}`);
-            console.log(`  Updated: ${result.rows[0].created_at}\n`);
-            console.log('🎉 You can now login with:');
-            console.log(`  Username: ${username}`);
-            console.log(`  Password: ${password}\n`);
+            console.log(`  Benutzername: ${result.rows[0].username}`);
+            console.log(`  E-Mail: ${result.rows[0].email}`);
+            console.log(`  Rolle: ${result.rows[0].role}`);
+            console.log(`  Aktualisiert am: ${result.rows[0].created_at}\n`);
+            console.log('🎉 Sie können sich jetzt einloggen mit:');
+            console.log(`  Benutzername: ${username}`);
+            console.log(`  Passwort: ${password}\n`);
             return;
         }
 
-        // Hash the password
-        console.log('🔐 Hashing password...');
+        // Passwort hashen
+        console.log('🔐 Passwort wird gehasht...');
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
 
-        // Insert new admin user
+        // Neuen Admin-Benutzer einfügen
         const result = await db.query(
             'INSERT INTO users (username, email, password_hash, first_name, last_name, role, is_company, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id, username, email, role, created_at',
             [username, email, passwordHash, firstName, lastName, 'admin', false]
         );
 
-        console.log('✅ Admin user created successfully!\n');
-        console.log('User Details:');
+        console.log('✅ Admin-Benutzer erfolgreich erstellt!\n');
+        console.log('Benutzerdetails:');
         console.log(`  ID: ${result.rows[0].id}`);
-        console.log(`  Username: ${result.rows[0].username}`);
-        console.log(`  Email: ${result.rows[0].email}`);
-        console.log(`  Role: ${result.rows[0].role}`);
-        console.log(`  Created: ${result.rows[0].created_at}\n`);
-        console.log('🎉 You can now login with:');
-        console.log(`  Username: ${username}`);
-        console.log(`  Password: ${password}\n`);
+        console.log(`  Benutzername: ${result.rows[0].username}`);
+        console.log(`  E-Mail: ${result.rows[0].email}`);
+        console.log(`  Rolle: ${result.rows[0].role}`);
+        console.log(`  Erstellt am: ${result.rows[0].created_at}\n`);
+        console.log('🎉 Sie können sich jetzt einloggen mit:');
+        console.log(`  Benutzername: ${username}`);
+        console.log(`  Passwort: ${password}\n`);
 
     } catch (err) {
-        console.error('\n❌ Error creating admin user:', err.message);
+        console.error('\n❌ Fehler beim Erstellen des Admin-Benutzers:', err.message);
         process.exit(1);
     }
 };
 
-// Run script
+// Skript ausführen
 createAdmin().then(() => {
     process.exit(0);
 }).catch(err => {

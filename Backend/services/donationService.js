@@ -92,7 +92,7 @@ const updateDonationStatus = async (donationId, status, actingNgoUserId = null) 
 
     if (!currentDonation) return null;
 
-    // Claim public offer: assign ngo_user_id when NGO accepts an unclaimed donation
+    // Öffentliches Angebot beanspruchen: ngo_user_id zuweisen, wenn NGO eine nicht beanspruchte Spende annimmt
     if (status === 'accepted' && actingNgoUserId) {
         await db.query(
             `UPDATE donations
@@ -102,7 +102,7 @@ const updateDonationStatus = async (donationId, status, actingNgoUserId = null) 
         );
     }
 
-    // Build timestamp fields in JS to avoid PostgreSQL parameter type conflicts
+    // Zeitstempelfelder in JS erstellen, um PostgreSQL-Parametertypkonflikte zu vermeiden
     const extraSets = [];
     if (status === 'accepted') {
         extraSets.push('accepted_at = CURRENT_TIMESTAMP');
