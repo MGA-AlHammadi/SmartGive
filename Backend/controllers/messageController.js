@@ -1,5 +1,6 @@
 const messageService = require('../services/messageService');
 const userService = require('../services/userService');
+const { getIO, getSocketIdByUserId } = require('../config/socket');
 
 const sendMessage = async (req, res) => {
     const { receiverId, content } = req.body;
@@ -11,6 +12,14 @@ const sendMessage = async (req, res) => {
 
     try {
         const message = await messageService.sendMessage(senderId, receiverId, content);
+        
+        // Echtzeit-Benachrichtigung an den Empfänger
+        const receiverSocketId = getSocketIdByUserId(receiverId);
+        if (receiverSocketId) {
+            const io = getIO();
+            io.to(receiverSocketId).emit('new_message', message);
+        }
+
         res.status(201).json(message);
     } catch (err) {
         console.error('Fehler beim Senden der Nachricht:', err);

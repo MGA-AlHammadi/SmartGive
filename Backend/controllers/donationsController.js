@@ -3,6 +3,7 @@ const needService = require('../services/needService');
 const userService = require('../services/userService');
 const activityService = require('../services/activityService');
 const reportService = require('../services/reportService');
+const { getIO, getSocketIdByUserId } = require('../config/socket');
 
 const mapFilesToUrls = (files = []) => files.slice(0, 5).map((file) => `/uploads/${file.filename}`);
 
@@ -27,10 +28,6 @@ const createDonation = async (req, res) => {
             city,
             notes
         } = req.body;
-
-        if (!itemName || !category || !quantity || !country || !city) {
-            return res.status(400).json({ message: 'Pflichtfelder fehlen' });
-        }
 
         let resolvedNgoUserId = ngoUserId || null;
 
@@ -65,6 +62,17 @@ const createDonation = async (req, res) => {
             title: 'Spendenangebot erstellt',
             details: `${donation.item_name} wurde als Angebot gesendet.`
         });
+
+        // Echtzeit-Benachrichtigung an die NGO
+        if (resolvedNgoUserId) {
+            const ngoSocketId = getSocketIdByUserId(resolvedNgoUserId);
+            if (ngoSocketId) {
+                getIO().to(ngoSocketId).emit('new_donation', {
+                    message: `Nue Spende erhalten: ${donation.item_name}`,
+                    donation
+                });
+            }
+        }
 
         res.status(201).json({ message: 'Spendenangebot erstellt', donation });
     } catch (err) {

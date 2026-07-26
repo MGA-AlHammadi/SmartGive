@@ -9,6 +9,13 @@ const messageRoutes = require('./routes/messageRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
+const http = require('http');
+const { initSocket } = require('./config/socket');
+
+const server = http.createServer(app);
+
+// Socket.io initialisieren
+initSocket(server);
 
 // Middleware
 app.use(cors());
@@ -44,6 +51,6 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`Server läuft auf Port ${PORT}`);
 });

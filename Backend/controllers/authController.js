@@ -68,10 +68,6 @@ const register = async (req, res) => {
     const { username, email, password, firstName, lastName, companyName, address, companyCountry, companyCity, isCompany } = req.body;
 
     try {
-        if (isCompany && (!companyCountry?.trim() || !companyCity?.trim())) {
-            return res.status(400).json({ message: 'Für NGO-Konten sind Land und Stadt erforderlich' });
-        }
-
         const companyAddress = isCompany
             ? `${companyCity.trim()}, ${companyCountry.trim()}`
             : (address || null);

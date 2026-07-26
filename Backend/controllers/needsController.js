@@ -28,10 +28,6 @@ const createNeed = async (req, res) => {
         const normalizedNeededBy = neededBy ? String(neededBy).trim() : null;
         const imageUrls = mapFilesToUrls(req.files);
 
-        if (!title || !category || !country || !city || !Number.isFinite(parsedQuantityNeeded) || parsedQuantityNeeded <= 0) {
-            return res.status(400).json({ message: 'Pflichtfelder fehlen' });
-        }
-
         const need = await needService.createNeed({
             ngoUserId: req.user.id,
             title: title.trim(),

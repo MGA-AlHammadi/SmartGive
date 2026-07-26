@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import messageService from '../services/messageService';
+import { useSocket } from '../context/SocketContext';
 
 const Messages = () => {
     const location = useLocation();
+    const socket = useSocket();
     const [conversations, setConversations] = useState([]);
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [messages, setMessages] = useState([]);
@@ -31,13 +33,32 @@ const Messages = () => {
     useEffect(() => {
         if (selectedConversation) {
             loadMessages(selectedConversation.other_user_id);
-            // Polling for new messages every 5 seconds
-            const interval = setInterval(() => {
-                loadMessages(selectedConversation.other_user_id, true);
-            }, 5000);
-            return () => clearInterval(interval);
         }
     }, [selectedConversation]);
+
+    // Socket Listener für neue Nachrichten
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleNewMessage = (msg) => {
+            // Wenn die Nachricht zum aktuellen Chat gehört
+            if (selectedConversation && 
+                (msg.sender_id === selectedConversation.other_user_id || 
+                 msg.receiver_id === selectedConversation.other_user_id)) {
+                
+                // Verhindere Duplikate, falls gerade gesendet wurde
+                setMessages(prev => {
+                    const exists = prev.find(m => m.id === msg.id);
+                    return exists ? prev : [...prev, msg];
+                });
+            }
+            // Konversationsliste immer aktualisieren für die Vorschau
+            loadConversations();
+        };
+
+        socket.on('new_message', handleNewMessage);
+        return () => socket.off('new_message');
+    }, [socket, selectedConversation]);
 
     useEffect(() => {
         scrollToBottom();
@@ -58,12 +79,10 @@ const Messages = () => {
         }
     };
 
-    const loadMessages = async (otherUserId, isPolling = false) => {
+    const loadMessages = async (otherUserId) => {
         try {
             const data = await messageService.getMessageHistory(otherUserId);
-            if (!isPolling || data.length !== messages.length) {
-                setMessages(data);
-            }
+            setMessages(data);
         } catch (err) {
             console.error(err);
         }
@@ -74,9 +93,10 @@ const Messages = () => {
         if (!newMessage.trim() || !selectedConversation) return;
 
         try {
-            await messageService.sendMessage(selectedConversation.other_user_id, newMessage);
+            const sentMsg = await messageService.sendMessage(selectedConversation.other_user_id, newMessage);
             setNewMessage('');
-            loadMessages(selectedConversation.other_user_id);
+            // Wir fügen die gesendete Nachricht direkt hinzu für sofortiges Feedback
+            setMessages(prev => [...prev, sentMsg]);
             loadConversations();
         } catch (err) {
             console.error(err);

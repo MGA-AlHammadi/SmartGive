@@ -11,8 +11,10 @@ const {
     deleteDonationByOwner,
     generateDonationReport
 } = require('../controllers/donationsController');
+const validate = require('../middlewares/validateMiddleware');
+const { createDonationSchema } = require('../validations/donationSchema');
 
-router.post('/', verifyToken, upload.array('images', 5), createDonation);
+router.post('/', verifyToken, upload.array('images', 5), validate(createDonationSchema), createDonation);
 router.get('/mine', verifyToken, listMyDonations);
 router.get('/received', verifyToken, listReceivedDonations);
 router.get('/:id/report', verifyToken, generateDonationReport);
