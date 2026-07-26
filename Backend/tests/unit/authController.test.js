@@ -26,23 +26,23 @@ describe('Auth Controller Unit Tests', () => {
 
     describe('login', () => {
         it('sollte 401 zurückgeben, wenn der Benutzer nicht existiert', async () => {
-            mockReq.body = { username: 'testuser', password: 'password123' };
+            mockReq.body = { email: 'test@example.com', password: 'password123' };
             
             // Simuliere: User nicht in der Datenbank gefunden
-            userService.getUserByUsername.mockResolvedValue(null);
+            userService.getUserByEmail.mockResolvedValue(null);
 
             await authController.login(mockReq, mockRes);
 
-            expect(userService.getUserByUsername).toHaveBeenCalledWith('testuser');
+            expect(userService.getUserByEmail).toHaveBeenCalledWith('test@example.com');
             expect(mockRes.status).toHaveBeenCalledWith(401);
-            expect(mockRes.json).toHaveBeenCalledWith({ message: 'Ungültiger Benutzername oder Passwort' });
+            expect(mockRes.json).toHaveBeenCalledWith({ message: 'Ungültige E-Mail oder Passwort' });
         });
 
         it('sollte 401 zurückgeben, wenn das Passwort falsch ist', async () => {
-             mockReq.body = { username: 'testuser', password: 'wrongpassword' };
-             const mockUser = { id: 1, username: 'testuser', password_hash: 'hashedpassword' };
+             mockReq.body = { email: 'test@example.com', password: 'wrongpassword' };
+             const mockUser = { id: 1, email: 'test@example.com', password_hash: 'hashedpassword' };
              
-             userService.getUserByUsername.mockResolvedValue(mockUser);
+             userService.getUserByEmail.mockResolvedValue(mockUser);
              // Simuliere: bcrypt.compare gibt false zurück (Passwort stimmt nicht überein)
              bcrypt.compare.mockResolvedValue(false);
 
@@ -50,21 +50,22 @@ describe('Auth Controller Unit Tests', () => {
 
              expect(bcrypt.compare).toHaveBeenCalledWith('wrongpassword', 'hashedpassword');
              expect(mockRes.status).toHaveBeenCalledWith(401);
-             expect(mockRes.json).toHaveBeenCalledWith({ message: 'Ungültiger Benutzername oder Passwort' });
+             expect(mockRes.json).toHaveBeenCalledWith({ message: 'Ungültige E-Mail oder Passwort' });
         });
 
         it('sollte sich erfolgreich einloggen, JWT erstellen und Nutzerdaten zurückgeben', async () => {
-            mockReq.body = { username: 'testuser', password: 'correctpassword' };
+            mockReq.body = { email: 'test@example.com', password: 'correctpassword' };
             const mockUser = { 
                 id: 1, 
-                username: 'testuser', 
+                username: 'testuser',
+                email: 'test@example.com',
                 password_hash: 'hashedpassword',
                 first_name: 'Max',
                 last_name: 'Mustermann',
                 is_company: false
             };
             
-            userService.getUserByUsername.mockResolvedValue(mockUser);
+            userService.getUserByEmail.mockResolvedValue(mockUser);
             bcrypt.compare.mockResolvedValue(true);
             jwt.sign.mockReturnValue('fake_jwt_token_123');
             userService.updateLastLogin.mockResolvedValue();

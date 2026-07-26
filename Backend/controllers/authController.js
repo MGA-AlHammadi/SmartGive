@@ -67,9 +67,14 @@ const login = async (req, res) => {
 const register = async (req, res) => {
     const { username, email, password, firstName, lastName, companyName, address, companyCountry, companyCity, isCompany } = req.body;
 
+    // Einfache Validierung vorab (Zusätzlich zum Zod Middleware als Backup)
+    if (isCompany && (!companyCountry || !companyCity)) {
+        return res.status(400).json({ message: 'Für NGO-Konten sind Land und Stadt erforderlich' });
+    }
+
     try {
         const companyAddress = isCompany
-            ? `${companyCity.trim()}, ${companyCountry.trim()}`
+            ? `${companyCity?.trim() || ''}, ${companyCountry?.trim() || ''}`
             : (address || null);
 
         // Passwort hashen

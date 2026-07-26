@@ -195,10 +195,11 @@ const Messages = () => {
                             <span className="text-xs text-gray-500">{selectedConversation.other_is_company ? 'NGO' : 'Spender'}</span>
                         </div>
                         <div className="flex-1 p-4 overflow-y-auto bg-gray-100">
-                            {messages.map((m, idx) => {
+                            {messages.map((m) => {
                                 const isMe = m.sender_id === currentUser.id;
                                 return (
-                                    <div key={idx} className={`mb-4 flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                                    /* Verwendung von m.id als Key anstelle des Array-Index für bessere Performance und DOM-Stabilität */
+                                    <div key={m.id} className={`mb-4 flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                                         <div className={`max-w-[70%] p-3 rounded-lg shadow-sm ${isMe ? 'bg-blue-600 text-white' : 'bg-white text-gray-800'}`}>
                                             <p>{m.content}</p>
                                             <div className={`text-[10px] mt-1 ${isMe ? 'text-blue-100' : 'text-gray-400'}`}>

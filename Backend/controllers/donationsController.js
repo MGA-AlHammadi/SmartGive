@@ -142,24 +142,26 @@ const generateDonationReport = (req, res) => {
 
 const updateDonationStatus = async (req, res) => {
     try {
-        const user = await userService.getUserById(req.user.id);
-
-        if (!user?.isCompany) {
-            return res.status(403).json({ message: 'Nur NGOs dürfen den Spendenstatus ändern' });
-        }
-
         const { status } = req.body;
+        const donationId = req.params.id;
         const allowedStatuses = ['accepted', 'rejected', 'in_transit', 'delivered', 'cancelled'];
 
+        // 1. Validierung des Status
         if (!status || !allowedStatuses.includes(status)) {
             return res.status(400).json({ message: 'Ungültiger Spendenstatus' });
         }
 
-        const donation = await donationService.getDonationById(req.params.id);
+        const user = await userService.getUserById(req.user.id);
+        if (!user?.isCompany) {
+            return res.status(403).json({ message: 'Nur NGOs dürfen den Spendenstatus ändern' });
+        }
+
+        const donation = await donationService.getDonationById(donationId);
         if (!donation) {
             return res.status(404).json({ message: 'Spende nicht gefunden' });
         }
 
+        // 2. Zugriffsberechtigungen prüfen
         if (donation.ngo_user_id && donation.ngo_user_id !== req.user.id) {
             return res.status(403).json({ message: 'Kein Zugriff auf diese Spende' });
         }
@@ -169,30 +171,11 @@ const updateDonationStatus = async (req, res) => {
             return res.status(400).json({ message: 'Öffentliche Angebote können nur angenommen werden' });
         }
 
-        const updatedDonation = await donationService.updateDonationStatus(req.params.id, status, req.user.id);
+        // 3. Status aktualisieren
+        const updatedDonation = await donationService.updateDonationStatus(donationId, status, req.user.id);
 
-        // Benachrichtigung für die NGO (Akteur)
-        await activityService.createActivity({
-            userId: req.user.id,
-            title: 'Spendenstatus geändert',
-            details: `Du hast die Spende "${donation.item_name}" als "${status}" markiert.`
-        });
-
-        // Benachrichtigung für den Spender (Besitzer der Spende)
-        await activityService.createActivity({
-            userId: donation.donor_user_id,
-            title: status === 'accepted' ? 'Spende angenommen!' 
-                 : (status === 'delivered' ? 'Spende erfolgreich erhalten!' 
-                 : (status === 'rejected' ? 'Spende abgelehnt' 
-                 : 'Spendenstatus aktualisiert')),
-            details: status === 'accepted' 
-                ? `Deine Spende "${donation.item_name}" wurde von der NGO akzeptiert.` 
-                : (status === 'delivered' 
-                    ? `Deine Spende "${donation.item_name}" wurde als erhalten markiert. Herzlichen Dank für deine Unterstützung!`
-                    : (status === 'rejected' 
-                        ? `Deine Spende "${donation.item_name}" wurde leider abgelehnt.`
-                        : `Der Status deiner Spende "${donation.item_name}" wurde auf "${status}" geändert.`))
-        });
+        // 4. Aktivitäten protokollieren (ausgelagertes Hilfsprogramm zur Senkung der Komplexität)
+        await notifyDonationActivity(req.user.id, donation, status);
 
         res.json({ message: 'Spendenstatus aktualisiert', donation: updatedDonation });
     } catch (err) {
@@ -200,6 +183,44 @@ const updateDonationStatus = async (req, res) => {
         res.status(500).json({ message: 'Serverfehler' });
     }
 };
+
+/**
+ * Hilfsfunktion zur Erstellung von Aktivitäten für NGO und Spender.
+ */
+const notifyDonationActivity = async (actingUserId, donation, status) => {
+    await activityService.createActivity({
+        userId: actingUserId,
+        title: 'Spendenstatus geändert',
+        details: `Du hast die Spende "${donation.item_name}" als "${status}" markiert.`
+    });
+
+    const statusMap = {
+        accepted: {
+            title: 'Spende angenommen!',
+            details: `Deine Spende "${donation.item_name}" wurde von der NGO akzeptiert.`
+        },
+        delivered: {
+            title: 'Spende erfolgreich erhalten!',
+            details: `Deine Spende "${donation.item_name}" wurde als erhalten markiert. Herzlichen Dank!`
+        },
+        rejected: {
+            title: 'Spende abgelehnt',
+            details: `Deine Spende "${donation.item_name}" wurde leider abgelehnt.`
+        }
+    };
+
+    const notification = statusMap[status] || {
+        title: 'Spendenstatus aktualisiert',
+        details: `Der Status deiner Spende "${donation.item_name}" wurde auf "${status}" geändert.`
+    };
+
+    await activityService.createActivity({
+        userId: donation.donor_user_id,
+        title: notification.title,
+        details: notification.details
+    });
+};
+
 
 const updateDonationByOwner = async (req, res) => {
     try {
