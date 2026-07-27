@@ -184,6 +184,19 @@ const deleteDonationByOwner = async (donationId, donorUserId) => {
     return result.rows[0];
 };
 
+const getTotalOfferedForNeed = async (ngoNeedId, excludeDonationId = null) => {
+    const sql = `
+        SELECT SUM(quantity) as total 
+        FROM donations 
+        WHERE ngo_need_id = $1 
+          AND status IN ('pending', 'accepted', 'in_transit', 'delivered')
+          ${excludeDonationId ? 'AND id != $2' : ''}
+    `;
+    const params = excludeDonationId ? [ngoNeedId, excludeDonationId] : [ngoNeedId];
+    const result = await db.query(sql, params);
+    return parseInt(result.rows[0].total || 0, 10);
+};
+
 module.exports = {
     createDonation,
     getDonationById,
@@ -192,5 +205,6 @@ module.exports = {
     listReceivedDonations,
     updateDonationStatus,
     updateDonationByOwner,
-    deleteDonationByOwner
+    deleteDonationByOwner,
+    getTotalOfferedForNeed
 };

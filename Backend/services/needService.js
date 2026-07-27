@@ -59,7 +59,11 @@ const listNeeds = async (filters) => {
     const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
 
     const result = await db.query(
-        `SELECT nn.*, u.company_name AS ngo_name
+        `SELECT nn.*, u.company_name AS ngo_name,
+                COALESCE((SELECT SUM(d.quantity) 
+                          FROM donations d 
+                          WHERE d.ngo_need_id = nn.id 
+                            AND d.status IN ('pending', 'accepted', 'in_transit', 'delivered')), 0) as quantity_offered
          FROM ngo_needs nn
          JOIN users u ON u.id = nn.ngo_user_id
          ${whereClause}
@@ -71,7 +75,16 @@ const listNeeds = async (filters) => {
 };
 
 const getNeedById = async (needId) => {
-    const result = await db.query('SELECT * FROM ngo_needs WHERE id = $1', [needId]);
+    const result = await db.query(
+        `SELECT nn.*,
+                COALESCE((SELECT SUM(d.quantity) 
+                          FROM donations d 
+                          WHERE d.ngo_need_id = nn.id 
+                            AND d.status IN ('pending', 'accepted', 'in_transit', 'delivered')), 0) as quantity_offered
+         FROM ngo_needs nn 
+         WHERE nn.id = $1`, 
+        [needId]
+    );
     return result.rows[0];
 };
 

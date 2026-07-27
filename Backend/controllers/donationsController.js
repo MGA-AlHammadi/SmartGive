@@ -36,6 +36,18 @@ const createDonation = async (req, res) => {
             if (!need) {
                 return res.status(404).json({ message: 'Bedarf nicht gefunden' });
             }
+
+            const alreadyOffered = await donationService.getTotalOfferedForNeed(ngoNeedId);
+            const remaining = need.quantity_needed - alreadyOffered;
+            
+            if (quantity > remaining) {
+                return res.status(400).json({ 
+                    message: alreadyOffered >= need.quantity_needed 
+                        ? 'Dieser Bedarf ist bereits durch andere Spendenangebote gedeckt.'
+                        : `Die Spendenmenge (${quantity}) überschreitet den verbleibenden Bedarf (${remaining}).` 
+                });
+            }
+
             resolvedNgoUserId = need.ngo_user_id;
         }
 
@@ -228,6 +240,27 @@ const updateDonationByOwner = async (req, res) => {
 
         if (!user || user.isCompany) {
             return res.status(403).json({ message: 'Nur Spender dürfen eigene Spenden bearbeiten' });
+        }
+
+        const donation = await donationService.getDonationById(req.params.id);
+        if (!donation || donation.donor_user_id !== req.user.id) {
+            return res.status(404).json({ message: 'Spende nicht gefunden oder kein Zugriff' });
+        }
+
+        // Validierung der Menge, falls sie geändert wird und ein Bedarf verknüpft ist
+        if (donation.ngo_need_id && req.body.quantity) {
+            const need = await needService.getNeedById(donation.ngo_need_id);
+            if (need) {
+                const newQuantity = Number(req.body.quantity);
+                const alreadyOfferedByOthers = await donationService.getTotalOfferedForNeed(donation.ngo_need_id, donation.id);
+                
+                const remaining = need.quantity_needed - alreadyOfferedByOthers;
+                if (newQuantity > remaining) {
+                    return res.status(400).json({ 
+                        message: `Die neue Menge (${newQuantity}) überschreitet den verbleibenden Bedarf (${remaining}).` 
+                    });
+                }
+            }
         }
 
         const imageUrls = req.files?.length ? mapFilesToUrls(req.files) : null;

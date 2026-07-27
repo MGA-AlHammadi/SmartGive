@@ -307,15 +307,39 @@ const Home = () => {
 
   const handleDonationSubmit = async (e) => {
     e.preventDefault();
+
+    const payload = {
+      ...donationForm,
+      ngoNeedId: donationForm.ngoNeedId ? Number(donationForm.ngoNeedId) : null,
+      quantity: Number(donationForm.quantity),
+    };
+
+    // Validierung gegen den Bedarf
+    if (payload.ngoNeedId) {
+      const targetNeed = needs.find(n => n.id === payload.ngoNeedId);
+      if (targetNeed) {
+        const needed = Number(targetNeed.quantity_needed);
+        const offered = Number(targetNeed.quantity_offered || 0);
+        let remaining = Math.max(0, needed - offered);
+
+        // Bei Bearbeitung einer existierenden Spende die eigene Menge aus "offered" herausrechnen
+        if (editingDonationId) {
+          const currentDonation = myDonations.find(d => d.id === editingDonationId);
+          if (currentDonation && ['pending', 'accepted', 'in_transit', 'delivered'].includes(currentDonation.status)) {
+            remaining += Number(currentDonation.quantity);
+          }
+        }
+
+        if (payload.quantity > remaining) {
+          toast.error(remaining <= 0 ? 'Dieser Bedarf ist bereits gedeckt.' : `Menge zu hoch. Verbleibender Bedarf: ${remaining}`);
+          return;
+        }
+      }
+    }
+
     setSubmitting(true);
 
     try {
-      const payload = {
-        ...donationForm,
-        ngoNeedId: donationForm.ngoNeedId ? Number(donationForm.ngoNeedId) : null,
-        quantity: Number(donationForm.quantity),
-      };
-
       if (editingDonationId) {
         await updateMyDonation(editingDonationId, payload, donationImages);
         toast.success('Spendenangebot erfolgreich aktualisiert');
@@ -386,13 +410,18 @@ const Home = () => {
   const handleQuickDonateSubmit = async (e, need) => {
     e.preventDefault();
 
-    if (!quickDonationForm.quantity || Number(quickDonationForm.quantity) <= 0) {
+    const amount = Number(quickDonationForm.quantity);
+    const needed = Number(need.quantity_needed);
+    const offered = Number(need.quantity_offered || 0);
+    const remaining = Math.max(0, needed - offered);
+
+    if (!quickDonationForm.quantity || amount <= 0) {
       toast.error('Bitte gültige Menge eingeben');
       return;
     }
 
-    if (!quickDonationForm.description.trim()) {
-      toast.error('Bitte Beschreibung eingeben');
+    if (amount > remaining) {
+      toast.error(offered >= needed ? 'Dieser Bedarf ist bereits gedeckt.' : `Menge zu hoch. Verbleibender Bedarf: ${remaining}`);
       return;
     }
 
