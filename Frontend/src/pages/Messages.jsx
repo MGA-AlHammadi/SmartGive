@@ -24,6 +24,8 @@ const Messages = () => {
             setSelectedConversation({
                 other_user_id: startUser.id,
                 other_username: startUser.username,
+                other_first_name: startUser.first_name,
+                other_last_name: startUser.last_name,
                 other_company_name: startUser.company_name,
                 other_is_company: startUser.is_company
             });
@@ -126,13 +128,36 @@ const Messages = () => {
             setSelectedConversation({
                 other_user_id: user.id,
                 other_username: user.username,
-                other_company_name: user.company_name,
-                other_is_company: user.is_company
+                other_first_name: user.firstName || user.first_name,
+                other_last_name: user.lastName || user.last_name,
+                other_company_name: user.companyName || user.company_name,
+                other_is_company: user.isCompany || user.is_company
             });
             setMessages([]);
         }
         setSearchQuery('');
         setSearchResults([]);
+    };
+
+    const getDisplayName = (conv) => {
+        if (!conv) return '';
+        
+        // Handle camelCase from searchUsers or snake_case from DB results
+        const isCompany = conv.other_is_company ?? conv.is_company ?? conv.isCompany;
+        const companyName = conv.other_company_name ?? conv.company_name ?? conv.companyName;
+        const firstName = conv.other_first_name ?? conv.first_name ?? conv.firstName;
+        const lastName = conv.other_last_name ?? conv.last_name ?? conv.lastName;
+        const username = conv.other_username ?? conv.username;
+
+        if (isCompany) {
+            return companyName || username;
+        }
+        
+        if (firstName || lastName) {
+            return `${firstName || ''} ${lastName || ''}`.trim();
+        }
+        
+        return username;
     };
 
     if (loading) return <div className="text-center p-10">Lade Nachrichten...</div>;
@@ -159,8 +184,8 @@ const Messages = () => {
                                         className="p-3 hover:bg-gray-100 cursor-pointer border-b"
                                         onClick={() => startNewConversation(user)}
                                     >
-                                        <div className="font-bold">{user.company_name || `${user.first_name} ${user.last_name}`}</div>
-                                        <div className="text-sm text-gray-500">@{user.username} - {user.is_company ? 'NGO' : 'Spender'}</div>
+                                        <div className="font-bold">{getDisplayName(user)}</div>
+                                        <div className="text-sm text-gray-500">@{user.username} - {(user.other_is_company ?? user.is_company ?? user.isCompany) ? 'NGO' : 'Spender'}</div>
                                     </div>
                                 ))}
                             </div>
@@ -177,7 +202,7 @@ const Messages = () => {
                                 className={`p-4 border-b cursor-pointer hover:bg-gray-50 ${selectedConversation?.other_user_id === conv.other_user_id ? 'bg-blue-50' : ''}`}
                                 onClick={() => setSelectedConversation(conv)}
                             >
-                                <div className="font-bold">{conv.other_company_name || conv.other_username}</div>
+                                <div className="font-bold">{getDisplayName(conv)}</div>
                                 <div className="text-sm text-gray-600 truncate">{conv.content}</div>
                                 <div className="text-xs text-gray-400 text-right">{new Date(conv.created_at).toLocaleString()}</div>
                             </div>
@@ -191,7 +216,7 @@ const Messages = () => {
                 {selectedConversation ? (
                     <>
                         <div className="p-4 border-b bg-gray-50 rounded-t-lg">
-                            <h3 className="font-bold">{selectedConversation.other_company_name || selectedConversation.other_username}</h3>
+                            <h3 className="font-bold">{getDisplayName(selectedConversation)}</h3>
                             <span className="text-xs text-gray-500">{selectedConversation.other_is_company ? 'NGO' : 'Spender'}</span>
                         </div>
                         <div className="flex-1 p-4 overflow-y-auto bg-gray-100">

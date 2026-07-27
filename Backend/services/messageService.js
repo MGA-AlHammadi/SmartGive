@@ -18,7 +18,15 @@ const getMessagesBetweenUsers = async (user1Id, user2Id) => {
     const result = await db.query(
         `SELECT m.*, 
                 u1.username as sender_username, 
-                u2.username as receiver_username
+                u1.first_name as sender_first_name,
+                u1.last_name as sender_last_name,
+                u1.company_name as sender_company_name,
+                u1.is_company as sender_is_company,
+                u2.username as receiver_username,
+                u2.first_name as receiver_first_name,
+                u2.last_name as receiver_last_name,
+                u2.company_name as receiver_company_name,
+                u2.is_company as receiver_is_company
          FROM messages m
          JOIN users u1 ON m.sender_id = u1.id
          JOIN users u2 ON m.receiver_id = u2.id
@@ -52,6 +60,8 @@ const getUserConversations = async (userId) => {
         SELECT lm.*, 
                u.id as other_user_id,
                u.username as other_username,
+               u.first_name as other_first_name,
+               u.last_name as other_last_name,
                u.company_name as other_company_name,
                u.is_company as other_is_company
         FROM LastMessages lm
