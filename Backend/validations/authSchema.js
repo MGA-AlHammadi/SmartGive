@@ -2,7 +2,7 @@ const { z } = require('zod');
 
 const registerSchema = z.object({
     username: z.string().min(3, 'Benutzername muss mindestens 3 Zeichen lang sein'),
-    email: z.string().email('Ungültige E-Mail-Adresse'),
+    email: z.email({ message: 'Ungültige E-Mail-Adresse' }),
     password: z.string().min(6, 'Passwort muss mindestens 6 Zeichen lang sein'),
     firstName: z.string().min(1, 'Vorname ist erforderlich').optional(),
     lastName: z.string().min(1, 'Nachname ist erforderlich').optional(),
@@ -22,7 +22,7 @@ const registerSchema = z.object({
 });
 
 const loginSchema = z.object({
-    email: z.string().email('Ungültige E-Mail-Adresse'),
+    email: z.email({ message: 'Ungültige E-Mail-Adresse' }),
     password: z.string().min(1, 'Passwort ist erforderlich')
 });
 

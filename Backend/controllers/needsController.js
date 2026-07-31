@@ -66,8 +66,8 @@ const createNeed = async (req, res) => {
 
 const listNeeds = async (req, res) => {
     try {
-        const { category, city, country, status } = req.query;
-        const needs = await needService.listNeeds({ category, city, country, status });
+        const { category, city, country, status, search } = req.query;
+        const needs = await needService.listNeeds({ category, city, country, status, search });
         res.json({ needs });
     } catch (err) {
         console.error('Fehler beim Laden der Bedarfe:', err);

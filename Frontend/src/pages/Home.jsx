@@ -46,6 +46,8 @@ const Home = () => {
     location: '',
   });
 
+  const [searchTerm, setSearchTerm] = useState('');
+
   const [quickDonationForm, setQuickDonationForm] = useState({
     quantity: '',
     description: '',
@@ -141,7 +143,9 @@ const Home = () => {
   const loadNeeds = async () => {
     setLoadingNeeds(true);
     try {
-      const data = await fetchNeeds();
+      const params = {};
+      if (searchTerm) params.search = searchTerm;
+      const data = await fetchNeeds(params);
       setNeeds(data.needs || []);
     } catch (err) {
       toast.error(err.message || 'Bedarfe konnten nicht geladen werden');
@@ -154,7 +158,9 @@ const Home = () => {
     if (isNgo || !token) return;
 
     try {
-      const data = await fetchMyDonations();
+      const params = {};
+      if (searchTerm) params.search = searchTerm;
+      const data = await fetchMyDonations(params);
       setMyDonations(data.donations || []);
     } catch (err) {
       toast.error(err.message || 'Eigene Spenden konnten nicht geladen werden');
@@ -165,12 +171,19 @@ const Home = () => {
     if (!isNgo || !token) return;
 
     try {
-      const data = await fetchReceivedDonations();
+      const params = {};
+      if (searchTerm) params.search = searchTerm;
+      const data = await fetchReceivedDonations(params);
       setReceivedDonations(data.donations || []);
     } catch (err) {
       toast.error(err.message || 'Eingegangene Spenden konnten nicht geladen werden');
     }
   };
+
+  useEffect(() => {
+    const s = searchParams.get('search');
+    setSearchTerm(s || '');
+  }, [searchParams]);
 
   useEffect(() => {
     if (!token) {
@@ -182,7 +195,7 @@ const Home = () => {
     loadMyDonations();
     loadReceivedDonations();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, isNgo]);
+  }, [token, isNgo, searchTerm]);
 
   useEffect(() => {
     if (!selectedNeedIdFromQuery || isNgo) return;

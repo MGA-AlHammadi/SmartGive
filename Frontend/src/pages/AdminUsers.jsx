@@ -10,7 +10,6 @@ export default function AdminUsers() {
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState('');
   const [role, setRole] = useState('');
-  const [selectedUser, setSelectedUser] = useState(null);
 
   const limit = 10;
 

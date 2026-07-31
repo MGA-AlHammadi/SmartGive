@@ -28,32 +28,37 @@ const createNeed = async (data) => {
 };
 
 const listNeeds = async (filters) => {
-    const { category, city, country, status } = filters;
+    const { category, city, country, status, search } = filters;
 
     const conditions = [];
     const values = [];
 
     if (category) {
         values.push(category);
-        conditions.push(`category = $${values.length}`);
+        conditions.push(`nn.category = $${values.length}`);
     }
 
     if (city) {
         values.push(city);
-        conditions.push(`city = $${values.length}`);
+        conditions.push(`nn.city = $${values.length}`);
     }
 
     if (country) {
         values.push(country);
-        conditions.push(`country = $${values.length}`);
+        conditions.push(`nn.country = $${values.length}`);
+    }
+
+    if (search) {
+        values.push(`%${search}%`);
+        conditions.push(`(nn.title ILIKE $${values.length} OR nn.description ILIKE $${values.length} OR u.company_name ILIKE $${values.length})`);
     }
 
     if (status && status !== 'all') {
         values.push(status);
-        conditions.push(`status = $${values.length}`);
+        conditions.push(`nn.status = $${values.length}`);
     } else if (!status) {
         // Standardmäßig aktive und erledigte Bedarfe anzeigen
-        conditions.push(`status IN ('active', 'erledigt')`);
+        conditions.push(`nn.status IN ('active', 'erledigt')`);
     }
 
     const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';

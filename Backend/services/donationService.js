@@ -52,21 +52,38 @@ const getDonationFullDetails = async (donationId) => {
     return result.rows[0];
 };
 
-const listMyDonations = async (donorUserId) => {
+const listMyDonations = async (donorUserId, search = null) => {
+    const values = [donorUserId];
+    let searchQuery = '';
+
+    if (search) {
+        values.push(`%${search}%`);
+        searchQuery = ` AND (d.item_name ILIKE $2 OR d.notes ILIKE $2 OR u.company_name ILIKE $2 OR nn.title ILIKE $2)`;
+    }
+
     const result = await db.query(
         `SELECT d.*, nn.title AS need_title, u.company_name AS ngo_name
          FROM donations d
          LEFT JOIN ngo_needs nn ON nn.id = d.ngo_need_id
          LEFT JOIN users u ON u.id = COALESCE(d.ngo_user_id, nn.ngo_user_id)
          WHERE d.donor_user_id = $1
+            ${searchQuery}
          ORDER BY d.created_at DESC`,
-        [donorUserId]
+        values
     );
 
     return result.rows;
 };
 
-const listReceivedDonations = async (ngoUserId) => {
+const listReceivedDonations = async (ngoUserId, search = null) => {
+    const values = [ngoUserId];
+    let searchQuery = '';
+    
+    if (search) {
+        values.push(`%${search}%`);
+        searchQuery = ` AND (d.item_name ILIKE $2 OR d.notes ILIKE $2 OR donor.first_name ILIKE $2 OR donor.last_name ILIKE $2 OR donor.company_name ILIKE $2)`;
+    }
+
     const result = await db.query(
         `SELECT d.*, nn.title AS need_title,
                 (d.ngo_need_id IS NULL AND d.ngo_user_id IS NULL) AS is_public_offer,
@@ -75,11 +92,12 @@ const listReceivedDonations = async (ngoUserId) => {
          FROM donations d
          LEFT JOIN ngo_needs nn ON nn.id = d.ngo_need_id
          JOIN users donor ON donor.id = d.donor_user_id
-         WHERE d.ngo_user_id = $1
+         WHERE (d.ngo_user_id = $1
             OR nn.ngo_user_id = $1
-            OR (d.ngo_user_id IS NULL AND d.ngo_need_id IS NULL AND d.status = 'pending')
+            OR (d.ngo_user_id IS NULL AND d.ngo_need_id IS NULL AND d.status = 'pending'))
+            ${searchQuery}
          ORDER BY d.created_at DESC`,
-        [ngoUserId]
+        values
     );
 
     return result.rows;

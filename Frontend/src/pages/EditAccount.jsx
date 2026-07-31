@@ -116,6 +116,20 @@ const EditAccount = () => {
     );
   }
 
+  // Hilfsvariable für die Profilbild-Vorschau
+  let profileContent;
+  if (previewUrl) {
+    profileContent = <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />;
+  } else if (currentProfilePic) {
+    profileContent = <img src={`http://localhost:5000${currentProfilePic}`} alt="Profile" className="w-full h-full object-cover" />;
+  } else {
+    profileContent = (
+      <div className="text-[#145539] text-3xl font-bold">
+        {(formData.firstName?.[0] || formData.companyName?.[0] || '?').toUpperCase()}
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-8">
       <div className="bg-white border border-[#dce5df] rounded-2xl p-6 sm:p-8">
@@ -128,21 +142,14 @@ const EditAccount = () => {
           <div className="flex flex-col sm:flex-row items-center gap-6 pb-4 mb-4 border-b border-[#dce5df]">
             <div className="relative group">
               <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-[#145539] bg-slate-50 flex items-center justify-center">
-                {previewUrl ? (
-                  <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
-                ) : currentProfilePic ? (
-                  <img src={`http://localhost:5000${currentProfilePic}`} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="text-[#145539] text-3xl font-bold">
-                    {(formData.firstName?.[0] || formData.companyName?.[0] || '?').toUpperCase()}
-                  </div>
-                )}
+                {profileContent}
               </div>
             </div>
             
             <div className="flex-1">
-              <label className="block text-sm font-semibold text-[#173d2f] mb-2">Profilbild aktualisieren</label>
+              <label htmlFor="profile-upload" className="block text-sm font-semibold text-[#173d2f] mb-2">Profilbild aktualisieren</label>
               <input
+                id="profile-upload"
                 type="file"
                 accept="image/*"
                 onChange={handleFileChange}

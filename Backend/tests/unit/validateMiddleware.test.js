@@ -12,7 +12,7 @@ describe('Validate Middleware Unit Tests', () => {
 
     // Test-Schema für die Validierung
     const testSchema = z.object({
-        email: z.string().email('Ungültige E-Mail'),
+        email: z.email('Ungültige E-Mail'),
         age: z.number().min(18, 'Muss mindestens 18 sein')
     });
 

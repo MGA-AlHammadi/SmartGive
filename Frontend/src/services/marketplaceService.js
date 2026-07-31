@@ -78,16 +78,20 @@ export const createDonation = async (payload, imageFiles = []) => {
   return handleResponse(response);
 };
 
-export const fetchMyDonations = async () => {
-  const response = await fetch(`${API_BASE_URL}/donations/mine`, {
+export const fetchMyDonations = async (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  const url = query ? `${API_BASE_URL}/donations/mine?${query}` : `${API_BASE_URL}/donations/mine`;
+  const response = await fetch(url, {
     headers: buildAuthHeaders(),
   });
 
   return handleResponse(response);
 };
 
-export const fetchReceivedDonations = async () => {
-  const response = await fetch(`${API_BASE_URL}/donations/received`, {
+export const fetchReceivedDonations = async (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  const url = query ? `${API_BASE_URL}/donations/received?${query}` : `${API_BASE_URL}/donations/received`;
+  const response = await fetch(url, {
     headers: buildAuthHeaders(),
   });
 

@@ -101,7 +101,8 @@ const createDonation = async (req, res) => {
 
 const listMyDonations = async (req, res) => {
     try {
-        const donations = await donationService.listMyDonations(req.user.id);
+        const { search } = req.query;
+        const donations = await donationService.listMyDonations(req.user.id, search);
         res.json({ donations });
     } catch (err) {
         console.error('Fehler beim Laden eigener Spenden:', err);
@@ -117,7 +118,8 @@ const listReceivedDonations = async (req, res) => {
             return res.status(403).json({ message: 'Nur NGOs dürfen empfangene Spenden sehen' });
         }
 
-        const donations = await donationService.listReceivedDonations(req.user.id);
+        const { search } = req.query;
+        const donations = await donationService.listReceivedDonations(req.user.id, search);
         res.json({ donations });
     } catch (err) {
         console.error('Fehler beim Laden empfangener Spenden:', err);

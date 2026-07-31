@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { RefreshCcw, User, LogOut, Bell, MessageSquare, Search, PlusCircle, CheckCircle2, Clock, XCircle } from 'lucide-react';
 import { fetchMyActivities } from '../services/authService';
 import { formatDistanceToNow } from 'date-fns';
@@ -7,11 +7,19 @@ import { de } from 'date-fns/locale';
 
 const Header = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [activities, setActivities] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [searchInput, setSearchInput] = useState('');
   const notificationRef = useRef(null);
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const token = localStorage.getItem('token');
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const s = params.get('search');
+    setSearchInput(s || '');
+  }, [location.search]);
 
   useEffect(() => {
     if (token) {
@@ -38,6 +46,15 @@ const Header = () => {
       setActivities(data.activities || []);
     } catch (err) {
       console.error('Fehler beim Laden der Benachrichtigungen:', err);
+    }
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchInput.trim()) {
+      navigate(`/home?search=${encodeURIComponent(searchInput.trim())}`);
+    } else {
+      navigate('/home');
     }
   };
 
@@ -105,14 +122,16 @@ const Header = () => {
 
       {/* Mitte - Suchleiste */}
       <div className="hidden lg:flex flex-1 max-w-md mx-8">
-        <div className="relative w-full">
+        <form onSubmit={handleSearch} className="relative w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input 
             type="text" 
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             placeholder={user.isCompany ? "Spenden oder Spender suchen..." : "NGOs oder Bedarfe suchen..."}
             className="w-full bg-gray-50 border border-gray-100 rounded-full py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:bg-white transition-all"
           />
-        </div>
+        </form>
       </div>
 
       {/* Rechte Seite - Aktionen & Profil */}
