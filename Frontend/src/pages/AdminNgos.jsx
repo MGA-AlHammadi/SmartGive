@@ -101,7 +101,11 @@ export default function AdminNgos() {
         {ngos.map(ngo => (
           <div key={ngo.id} className="ngo-card">
             {ngo.profile_picture && (
-              <img src={ngo.profile_picture} alt={ngo.company_name} className="ngo-image" />
+              <img 
+                src={`http://localhost:5000${ngo.profile_picture}`} 
+                alt={ngo.company_name} 
+                className="ngo-image" 
+              />
             )}
             <div className="ngo-content">
               <h3>{ngo.company_name}</h3>

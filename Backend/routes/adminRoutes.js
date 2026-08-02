@@ -23,6 +23,14 @@ router.get('/ngos/verified', adminController.getVerifiedNgos);
 router.post('/ngos/:ngoId/verify', adminController.verifyNgo);
 router.post('/ngos/:ngoId/reject', adminController.rejectNgo);
 
+// Bedarfe & Angebote
+router.get('/content/needs', adminController.listAdminNeeds);
+router.get('/content/donations', adminController.listAdminDonations);
+router.delete('/content/needs/:needId', adminController.deleteAdminNeed);
+router.patch('/content/needs/:needId/status', adminController.updateAdminNeedStatus);
+router.delete('/content/donations/:donationId', adminController.deleteAdminDonation);
+router.patch('/content/donations/:donationId/status', adminController.updateAdminDonationStatus);
+
 // Inhaltsmoderation
 router.get('/reports', adminController.listReports);
 router.post('/reports/:reportId/review', adminController.reviewReport);

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import AdminDashboard from './AdminDashboard';
 import AdminUsers from './AdminUsers';
 import AdminNgos from './AdminNgos';
+import AdminContent from './AdminContent';
 import AdminModeration from './AdminModeration';
 import AdminLogs from './AdminLogs';
 import '../styles/Admin.css';
@@ -19,6 +20,8 @@ export default function Admin() {
         return <AdminUsers />;
       case 'ngos':
         return <AdminNgos />;
+      case 'content':
+        return <AdminContent />;
       case 'moderation':
         return <AdminModeration />;
       case 'logs':
@@ -32,6 +35,7 @@ export default function Admin() {
     { id: 'dashboard', label: '📊 Dashboard', icon: '📊' },
     { id: 'users', label: '👥 Benutzer', icon: '👥' },
     { id: 'ngos', label: '🏢 NGOs', icon: '🏢' },
+    { id: 'content', label: '🧾 Inhalte', icon: '🧾' },
     { id: 'moderation', label: '📋 Moderation', icon: '📋' },
     { id: 'logs', label: '📜 Logs', icon: '📜' },
   ];

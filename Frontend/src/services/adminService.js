@@ -136,6 +136,81 @@ export const rejectNgo = async (ngoId, reason) => {
   return data;
 };
 
+// Bedarfe & Angebote
+export const fetchAdminNeeds = async (page = 1, limit = 10, search = '', status = '') => {
+  const params = new URLSearchParams({ page, limit, search, status });
+  const response = await fetch(`${API_URL}/content/needs?${params}`, {
+    headers: buildAuthHeaders(),
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || 'Fehler beim Abrufen der Bedarfe');
+  }
+  return data;
+};
+
+export const fetchAdminDonations = async (page = 1, limit = 10, search = '', status = '') => {
+  const params = new URLSearchParams({ page, limit, search, status });
+  const response = await fetch(`${API_URL}/content/donations?${params}`, {
+    headers: buildAuthHeaders(),
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || 'Fehler beim Abrufen der Angebote');
+  }
+  return data;
+};
+
+export const deleteAdminNeed = async (needId) => {
+  const response = await fetch(`${API_URL}/content/needs/${needId}`, {
+    method: 'DELETE',
+    headers: buildAuthHeaders(),
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || 'Fehler beim Löschen des Bedarfs');
+  }
+  return data;
+};
+
+export const updateAdminNeedStatus = async (needId, status) => {
+  const response = await fetch(`${API_URL}/content/needs/${needId}/status`, {
+    method: 'PATCH',
+    headers: buildAuthHeaders(),
+    body: JSON.stringify({ status }),
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || 'Fehler beim Aktualisieren des Bedarfs');
+  }
+  return data;
+};
+
+export const deleteAdminDonation = async (donationId) => {
+  const response = await fetch(`${API_URL}/content/donations/${donationId}`, {
+    method: 'DELETE',
+    headers: buildAuthHeaders(),
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || 'Fehler beim Löschen des Angebots');
+  }
+  return data;
+};
+
+export const updateAdminDonationStatus = async (donationId, status) => {
+  const response = await fetch(`${API_URL}/content/donations/${donationId}/status`, {
+    method: 'PATCH',
+    headers: buildAuthHeaders(),
+    body: JSON.stringify({ status }),
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || 'Fehler beim Aktualisieren des Angebots');
+  }
+  return data;
+};
+
 // Inhaltsmoderation
 export const listReports = async (page = 1, limit = 10, status = 'pending') => {
   const params = new URLSearchParams({ page, limit, status });
