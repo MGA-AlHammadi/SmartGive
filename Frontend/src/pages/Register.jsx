@@ -53,12 +53,12 @@ const Register = () => {
         username: formData.email, // Backend zwingt einen username auf, wir nehmen die Email
         email: formData.email,
         password: formData.password,
-        firstName: firstName,
-        lastName: lastName,
-        companyName: role === 'NGO' ? formData.fullName : null, // Falls NGO, füllen wir companyName
-        companyCountry: role === 'NGO' ? formData.country.trim() : null,
-        companyCity: role === 'NGO' ? formData.city.trim() : null,
-        address: role === 'NGO' ? `${formData.city.trim()}, ${formData.country.trim()}` : null,
+        firstName: firstName || '',
+        lastName: lastName || '',
+        companyName: role === 'NGO' ? formData.fullName : '',
+        companyCountry: role === 'NGO' ? formData.country.trim() : '',
+        companyCity: role === 'NGO' ? formData.city.trim() : '',
+        address: role === 'NGO' ? `${formData.city.trim()}, ${formData.country.trim()}` : '',
         isCompany: role === 'NGO'
       });
 
