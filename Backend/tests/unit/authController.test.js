@@ -137,4 +137,29 @@ describe('Auth Controller Unit Tests', () => {
              expect(mockRes.status).toHaveBeenCalledWith(201);
          });
     });
+
+    describe('getUserProfile', () => {
+        it('sollte bei NGO Profilen den Verifizierungsstatus korrekt weitergeben', async () => {
+            mockReq.params = { id: '42' };
+            userService.getUserById.mockResolvedValue({
+                id: 42,
+                username: 'ngo_test',
+                companyName: 'Help Foundation',
+                isVerified: true,
+                isCompany: true,
+                role: 'user'
+            });
+
+            await authController.getUserProfile(mockReq, mockRes);
+
+            expect(userService.getUserById).toHaveBeenCalledWith('42');
+            expect(mockRes.json).toHaveBeenCalledWith({
+                user: expect.objectContaining({
+                    id: 42,
+                    isVerified: true,
+                    isCompany: true
+                })
+            });
+        });
+    });
 });

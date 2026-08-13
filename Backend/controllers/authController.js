@@ -19,8 +19,8 @@ const mapUserToResponse = (user) => ({
     createdAt: user.created_at || null,
     isCompany: user.isCompany ?? user.is_company,
     role: user.role || 'user',
-    isVerified: user.is_verified || false,
-    isBanned: user.is_banned || false
+    isVerified: user.isVerified ?? user.is_verified ?? false,
+    isBanned: user.isBanned ?? user.is_banned ?? false
 });
 
 const login = async (req, res) => {

@@ -92,7 +92,10 @@ describe('Need Service Unit Tests', () => {
              
              const result = await needService.getNeedById(5);
              
-             expect(db.query).toHaveBeenCalledWith('SELECT * FROM ngo_needs WHERE id = $1', [5]);
+             expect(db.query).toHaveBeenCalledWith(
+                 expect.stringContaining('WHERE nn.id = $1'),
+                 [5]
+             );
              expect(result).toEqual(mockNeed);
          });
     });

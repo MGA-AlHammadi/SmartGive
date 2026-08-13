@@ -25,13 +25,13 @@ describe('Auth Middleware - verifyToken', () => {
         jest.clearAllMocks(); // Setze alle Mocks zurück
     });
 
-    it('sollte 403 zurückgeben, wenn kein Token bereitgestellt wird', () => {
+    it('sollte 401 zurückgeben, wenn kein Token bereitgestellt wird', () => {
         // Simuliere: req.header() gibt nichts (undefined) zurück
         mockRequest.header.mockReturnValue(undefined);
 
         verifyToken(mockRequest, mockResponse, nextFunction);
 
-        expect(mockResponse.status).toHaveBeenCalledWith(403);
+        expect(mockResponse.status).toHaveBeenCalledWith(401);
         expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Kein Token bereitgestellt, Zugriff verweigert' });
         expect(nextFunction).not.toHaveBeenCalled();
     });
